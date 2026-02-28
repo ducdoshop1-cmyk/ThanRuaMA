@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MA Cloud — Tối Ưu Hóa Chiến Lược Đám Mây MA</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --bg2: #111827;
+      --bg3: #1a2235;
+      --border: #1e2d45;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --accent: #00ffbb;
+      --accent2: #00cc96;
+      --red: #ff4757;
+      --red2: #ff6b7a;
+      --yellow: #ffd93d;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --orange: #f97316
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999
+    }
+
+    .container {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 24px
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0
+    }
+
+    .header h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -.5px
+    }
+
+    .header p {
+      color: var(--text2);
+      font-size: 13px;
+      margin-top: 2px
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      width: fit-content
+    }
+
+    .tab-btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: var(--bg)
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: var(--bg3)
+    }
+
+    .tab-content {
+      display: none
+    }
+
+    .tab-content.active {
+      display: block
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text2);
+      margin-bottom: 8px
+    }
+
+    .control-group select,
+    .control-group input,
+    .symbol-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .control-group select:focus,
+    .control-group input:focus,
+    .symbol-input:focus {
+      border-color: var(--accent)
+    }
+
+    .control-group select option {
+      background: var(--bg2)
+    }
+
+    .symbol-input::placeholder {
+      color: var(--text2);
+      opacity: .6
+    }
+
+    .dual-input {
+      display: flex;
+      gap: 8px
+    }
+
+    .dual-input input {
+      width: 50%
+    }
+
+    .symbol-search-wrap {
+      position: relative
+    }
+
+    .symbol-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-top: 4px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .5)
+    }
+
+    .symbol-dropdown.show {
+      display: block
+    }
+
+    .symbol-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background .1s
+    }
+
+    .symbol-item:hover {
+      background: var(--bg3)
+    }
+
+    .symbol-item .pair {
+      color: var(--text)
+    }
+
+    .symbol-item .change-pos {
+      color: var(--accent);
+      font-size: 11px
+    }
+
+    .symbol-item .change-neg {
+      color: var(--red);
+      font-size: 11px
+    }
+
+    .symbol-loading {
+      padding: 12px 14px;
+      color: var(--text2);
+      font-size: 12px;
+      text-align: center
+    }
+
+    .symbol-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      margin-left: 6px
+    }
+
+    .tag-hot {
+      background: rgba(255, 71, 87, .2);
+      color: var(--red2)
+    }
+
+    .tag-top {
+      background: rgba(0, 255, 187, .15);
+      color: var(--accent)
+    }
+
+    .btn-run {
+      grid-column: 1/-1;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border: none;
+      border-radius: 12px;
+      color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .5px
+    }
+
+    .btn-run:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 255, 187, .25)
+    }
+
+    .btn-run:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none
+    }
+
+    .progress-wrap {
+      margin-bottom: 24px;
+      display: none
+    }
+
+    .progress-wrap.active {
+      display: block
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 8px
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      border-radius: 3px;
+      transition: width .15s;
+      width: 0%
+    }
+
+    .log-area {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text2);
+      max-height: 140px;
+      overflow-y: auto;
+      margin-top: 12px;
+      line-height: 1.6
+    }
+
+    .log-area .ok {
+      color: var(--accent)
+    }
+
+    .log-area .err {
+      color: var(--red)
+    }
+
+    .log-area .info {
+      color: var(--blue)
+    }
+
+    .log-area .warn {
+      color: var(--yellow)
+    }
+
+    .stats-row {
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px
+    }
+
+    .stats-row.active {
+      display: grid
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px
+    }
+
+    .stat-card.green::before {
+      background: var(--accent)
+    }
+
+    .stat-card.red::before {
+      background: var(--red)
+    }
+
+    .stat-card.blue::before {
+      background: var(--blue)
+    }
+
+    .stat-card.purple::before {
+      background: var(--purple)
+    }
+
+    .stat-card.yellow::before {
+      background: var(--yellow)
+    }
+
+    .stat-card.orange::before {
+      background: var(--orange)
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text2);
+      margin-bottom: 6px
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700
+    }
+
+    .stat-card.green .stat-value {
+      color: var(--accent)
+    }
+
+    .stat-card.red .stat-value {
+      color: var(--red2)
+    }
+
+    .stat-card.blue .stat-value {
+      color: var(--blue)
+    }
+
+    .stat-card.purple .stat-value {
+      color: var(--purple)
+    }
+
+    .stat-card.yellow .stat-value {
+      color: var(--yellow)
+    }
+
+    .stat-card.orange .stat-value {
+      color: var(--orange)
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--text2);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace
+    }
+
+    .guide-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: none
+    }
+
+    .guide-card.active {
+      display: block
+    }
+
+    .guide-card h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--yellow);
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px
+    }
+
+    .guide-item {
+      background: var(--bg3);
+      border-radius: 12px;
+      padding: 14px 16px
+    }
+
+    .guide-item h4 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px
+    }
+
+    .guide-item p {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.6
+    }
+
+    .guide-item .hl {
+      color: var(--accent);
+      font-weight: 600
+    }
+
+    .guide-item .wn {
+      color: var(--yellow);
+      font-weight: 600
+    }
+
+    .guide-item .bd {
+      color: var(--red2);
+      font-weight: 600
+    }
+
+    .results-grid {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 24px
+    }
+
+    .results-grid.active {
+      display: grid
+    }
+
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .panel-body {
+      padding: 16px
+    }
+
+    .heatmap-container {
+      overflow-x: auto
+    }
+
+    .heatmap-container table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 500px
+    }
+
+    .heatmap-container th,
+    .heatmap-container td {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-align: center;
+      padding: 4px 3px;
+      min-width: 38px
+    }
+
+    .heatmap-container th {
+      color: var(--text2);
+      font-weight: 500;
+      position: sticky;
+      background: var(--bg2)
+    }
+
+    .heatmap-cell {
+      border-radius: 4px;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .1s;
+      position: relative
+    }
+
+    .heatmap-cell:hover {
+      transform: scale(1.3);
+      box-shadow: 0 0 12px rgba(0, 0, 0, .5);
+      z-index: 10
+    }
+
+    .heatmap-cell.best {
+      outline: 2px solid var(--yellow);
+      outline-offset: 1px
+    }
+
+    .heatmap-cell.stable-zone {
+      outline: 2px dashed rgba(0, 255, 187, .6);
+      outline-offset: 1px
+    }
+
+    .top-table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .top-table th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text2);
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      cursor: pointer
+    }
+
+    .top-table th:hover {
+      color: var(--accent)
+    }
+
+    .top-table td {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(30, 45, 69, .5)
+    }
+
+    .top-table tr:hover td {
+      background: var(--bg3)
+    }
+
+    .rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px
+    }
+
+    .rank-1 {
+      background: linear-gradient(135deg, #ffd93d, #f59e0b);
+      color: #000
+    }
+
+    .rank-2 {
+      background: linear-gradient(135deg, #c0c0c0, #9ca3af);
+      color: #000
+    }
+
+    .rank-3 {
+      background: linear-gradient(135deg, #cd7f32, #a0522d);
+      color: #fff
+    }
+
+    .positive {
+      color: var(--accent)
+    }
+
+    .negative {
+      color: var(--red)
+    }
+
+    .metric-selector,
+    .sort-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .sort-label {
+      font-size: 11px;
+      color: var(--text2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-right: 4px
+    }
+
+    .metric-btn {
+      padding: 6px 12px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .metric-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent)
+    }
+
+    .tooltip {
+      position: fixed;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+      display: none;
+      max-width: 260px
+    }
+
+    .tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 4px
+    }
+
+    .tooltip-label {
+      color: var(--text2)
+    }
+
+    .tooltip-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 6px 0
+    }
+
+    .tooltip-note {
+      color: var(--yellow);
+      font-size: 10px;
+      margin-top: 4px
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: 4px
+    }
+
+    .badge-best {
+      background: rgba(255, 217, 61, .2);
+      color: var(--yellow)
+    }
+
+    .badge-stable {
+      background: rgba(0, 255, 187, .15);
+      color: var(--accent)
+    }
+
+    .badge-risky {
+      background: rgba(255, 71, 87, .15);
+      color: var(--red2)
+    }
+
+    .btn-csv {
+      padding: 6px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s;
+      margin-left: auto
+    }
+
+    .btn-csv:hover {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent)
+    }
+
+    .exchange-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      margin-left: 6px;
+      vertical-align: middle
+    }
+
+    .badge-binance {
+      background: rgba(243, 186, 47, .15);
+      color: #f3ba2f
+    }
+
+    .badge-mexc {
+      background: rgba(0, 180, 255, .15);
+      color: #00b4ff
+    }
+
+    .server-status {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      z-index: 100
+    }
+
+    .server-ok {
+      background: rgba(0, 255, 187, .15);
+      color: var(--accent);
+      border: 1px solid rgba(0, 255, 187, .3)
+    }
+
+    .server-err {
+      background: rgba(255, 71, 87, .15);
+      color: var(--red);
+      border: 1px solid rgba(255, 71, 87, .3)
+    }
+
+    .auto-summary {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px
+    }
+
+    .auto-summary .panel-body {
+      padding: 0
+    }
+
+    .auto-table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .auto-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text2);
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      background: var(--bg3)
+    }
+
+    .auto-table td {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(30, 45, 69, .5)
+    }
+
+    .auto-table tr:hover td {
+      background: var(--bg3)
+    }
+
+    .auto-table tr.best-row {
+      background: rgba(0, 255, 187, .05)
+    }
+
+    .auto-table tr.best-row td {
+      font-weight: 600
+    }
+
+    .tf-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin: 2px
+    }
+
+    .tf-done {
+      background: rgba(0, 255, 187, .1);
+      color: var(--accent)
+    }
+
+    .tf-run {
+      background: rgba(59, 130, 246, .1);
+      color: var(--blue)
+    }
+
+    .tf-wait {
+      background: var(--bg3);
+      color: var(--text2)
+    }
+
+    .best-badge {
+      background: linear-gradient(135deg, rgba(255, 217, 61, .2), rgba(0, 255, 187, .15));
+      color: var(--yellow);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700
+    }
+
+    .ma-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    @media(max-width:700px) {
+      .container {
+        padding: 12px
+      }
+
+      .header h1 {
+        font-size: 17px
+      }
+
+      .controls {
+        padding: 16px;
+        gap: 12px
+      }
+
+      .ma-type-grid {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-icon">☁️</div>
+      <div>
+        <h1>MA Cloud — Tối Ưu Hóa Đám Mây MA</h1>
+        <p>Long trên mây, Short dưới mây — MEXC Futures & Binance Spot</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('manual')">🔧 Quét thủ công</button>
+      <button class="tab-btn" onclick="switchTab('auto')">🚀 Quét đa khung</button>
+      <button class="tab-btn" onclick="switchTab('combo')">🧬 Quét tổ hợp MA</button>
+      <button class="tab-btn" onclick="switchTab('full')">🔥 Quét toàn diện</button>
+    </div>
+
+    <!-- ============ TAB 1: MANUAL ============ -->
+    <div class="tab-content active" id="tab-manual">
+      <div class="controls">
+        <div class="control-group">
+          <label>Nguồn dữ liệu</label>
+          <select id="exchangeSelect" onchange="onExchangeChange()">
+            <option value="mexc_futures">MEXC Futures</option>
+            <option value="binance_spot">Binance Spot</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Cặp giao dịch</label>
+          <div class="symbol-search-wrap">
+            <input type="text" class="symbol-input" id="symbolInput" placeholder="VD: BTC_USDT" autocomplete="off"
+              value="BTC_USDT">
+            <div class="symbol-dropdown" id="symbolDropdown"></div>
+          </div>
+        </div>
+        <div class="control-group"><label>Khung thời gian</label>
+          <select id="timeframe">
+            <option value="1m">1 phút</option>
+            <option value="5m">5 phút</option>
+            <option value="15m" selected>15 phút</option>
+            <option value="30m">30 phút</option>
+            <option value="1h">1 giờ</option>
+            <option value="2h">2 giờ</option>
+            <option value="4h">4 giờ</option>
+            <option value="1d">1 ngày</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Loại MA Nhanh</label>
+          <select id="fastMAType">
+            <option value="EMA" selected>EMA</option>
+            <option value="SMA">SMA</option>
+            <option value="WMA">WMA</option>
+            <option value="DEMA">DEMA</option>
+            <option value="TEMA">TEMA</option>
+            <option value="HullMA">HullMA</option>
+            <option value="SMMA">SMMA</option>
+            <option value="ZEMA">ZEMA</option>
+            <option value="TMA">TMA</option>
+            <option value="SSMA">SSMA (Ehlers)</option>
+            <option value="LINREG">LINREG</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Loại MA Chậm</label>
+          <select id="slowMAType">
+            <option value="EMA" selected>EMA</option>
+            <option value="SMA">SMA</option>
+            <option value="WMA">WMA</option>
+            <option value="DEMA">DEMA</option>
+            <option value="TEMA">TEMA</option>
+            <option value="HullMA">HullMA</option>
+            <option value="SMMA">SMMA</option>
+            <option value="ZEMA">ZEMA</option>
+            <option value="TMA">TMA</option>
+            <option value="SSMA">SSMA (Ehlers)</option>
+            <option value="LINREG">LINREG</option>
+          </select>
+        </div>
+        <div class="control-group"><label>MA Nhanh (min → max)</label>
+          <div class="dual-input"><input type="number" id="fastMin" value="2" min="2"><input type="number" id="fastMax"
+              value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>MA Chậm (min → max)</label>
+          <div class="dual-input"><input type="number" id="slowMin" value="2" min="2"><input type="number" id="slowMax"
+              value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>Bước nhảy (Nhanh / Chậm)</label>
+          <div class="dual-input"><input type="number" id="fastStep" value="1" min="1"><input type="number"
+              id="slowStep" value="1" min="1"></div>
+        </div>
+        <div class="control-group"><label>Số nến tối đa</label><select id="candleCount">
+            <option value="3000">3,000</option>
+            <option value="5000">5,000</option>
+            <option value="10000" selected>10,000</option>
+            <option value="20000">20,000</option>
+          </select></div>
+        <div class="control-group"><label>Phí giao dịch (%/lệnh)</label><select id="feeRate">
+            <option value="0" selected>0%</option>
+            <option value="0.02">0.02%</option>
+            <option value="0.04">0.04%</option>
+            <option value="0.1">0.1%</option>
+          </select></div>
+        <button class="btn-run" id="btnRun" onclick="startOptimization()">🚀 BẮT ĐẦU TỐI ƯU HÓA</button>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-info"><span id="progressText">Đang tải...</span><span id="progressPct">0%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="log-area" id="logArea"></div>
+      </div>
+      <div class="guide-card" id="dataInfo" style="display:none;padding:14px 24px">
+        <div style="display:flex;flex-wrap:wrap;gap:20px;font-family:'JetBrains Mono',monospace;font-size:12px"><span>📊
+            <span style="color:var(--accent)" id="diCandles">—</span> nến</span><span>🏦 <span style="color:var(--text)"
+              id="diExchange">—</span></span><span>📅 <span style="color:var(--text)"
+              id="diRange">—</span></span><span>⚡ <span style="color:var(--text)" id="diCombos">—</span> tổ
+            hợp</span><span>⏱️ <span style="color:var(--text)" id="diTime">—</span></span><span>💰 <span
+              style="color:var(--text)" id="diFee">—</span></span></div>
+      </div>
+      <div class="guide-card" id="guideCard">
+        <h3>💡 Hướng dẫn đọc kết quả</h3>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <h4>☁️ Chiến lược Đám Mây MA</h4>
+            <p>Vùng giữa MA Nhanh và MA Chậm tạo <span class="hl">"đám mây"</span>. Long khi nến trên mây, Short khi
+              dưới mây, <span class="wn">giữ nguyên khi trong mây</span>.</p>
+          </div>
+          <div class="guide-item">
+            <h4>🟢 Ưu tiên vùng ổn định</h4>
+            <p>Chọn tham số ở <span class="hl">giữa vùng xanh lớn</span> trên heatmap — tránh overfitting.</p>
+          </div>
+          <div class="guide-item">
+            <h4>⚖️ Sharpe = LN ÷ DD</h4>
+            <p>Lợi nhuận cao nhưng DD cũng cao = <span class="bd">rủi ro</span>. Ưu tiên Sharpe cao.</p>
+          </div>
+          <div class="guide-item">
+            <h4>📊 PF > 1.5</h4>
+            <p>Mỗi đồng thua, thắng lại bao nhiêu. PF &lt; 1 = thua lỗ.</p>
+          </div>
+        </div>
+      </div>
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card green">
+          <div class="stat-label">Lợi nhuận cao nhất</div>
+          <div class="stat-value" id="statProfit">—</div>
+          <div class="stat-sub" id="statParams">—</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">🏆 Đề xuất</div>
+          <div class="stat-value" id="statRecommend">—</div>
+          <div class="stat-sub" id="statRecommendSub">—</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Tỷ lệ thắng</div>
+          <div class="stat-value" id="statWinRate">—</div>
+          <div class="stat-sub" id="statTrades">—</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Hệ số LN</div>
+          <div class="stat-value" id="statPF">—</div>
+          <div class="stat-sub" id="statAvgTrade">—</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Sụt giảm vốn</div>
+          <div class="stat-value" id="statDD">—</div>
+          <div class="stat-sub" id="statDDPct">—</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Loại MA</div>
+          <div class="stat-value" id="statMAType">—</div>
+          <div class="stat-sub" id="statMATypeSub">—</div>
+        </div>
+      </div>
+      <div class="results-grid" id="resultsGrid">
+        <div class="panel">
+          <div class="panel-header">🏆 Top 20 <button class="btn-csv" onclick="exportCSV()">📥 CSV</button></div>
+          <div class="panel-body" style="overflow-x:auto">
+            <div class="sort-selector"><span class="sort-label">Sắp xếp:</span><button class="metric-btn active"
+                onclick="sortTop('sharpe',this)">⭐ Đề xuất</button><button class="metric-btn"
+                onclick="sortTop('profit',this)">Lợi nhuận</button><button class="metric-btn"
+                onclick="sortTop('winrate',this)">Tỷ lệ thắng</button><button class="metric-btn"
+                onclick="sortTop('pf',this)">PF</button><button class="metric-btn" onclick="sortTop('dd',this)">Ít
+                DD</button></div>
+            <table class="top-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Fast</th>
+                  <th>Slow</th>
+                  <th>LN%</th>
+                  <th>Thắng</th>
+                  <th>Lệnh</th>
+                  <th>PF</th>
+                  <th>DD%</th>
+                  <th>TB</th>
+                  <th>Sharpe</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="topBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">🗺️ Bản đồ nhiệt <span
+              style="color:var(--text2);font-weight:400;font-size:11px;margin-left:8px">viền vàng = đề xuất | xanh nét
+              đứt = ổn định</span></div>
+          <div class="panel-body">
+            <div class="metric-selector" id="metricSelector"><button class="metric-btn active"
+                onclick="switchMetric('profit',this)">LN%</button><button class="metric-btn"
+                onclick="switchMetric('winrate',this)">Thắng</button><button class="metric-btn"
+                onclick="switchMetric('pf',this)">PF</button><button class="metric-btn"
+                onclick="switchMetric('dd',this)">DD</button><button class="metric-btn"
+                onclick="switchMetric('sharpe',this)">Sharpe</button><button class="metric-btn"
+                onclick="switchMetric('trades',this)">Lệnh</button></div>
+            <div class="heatmap-container" id="heatmapContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TAB 2: AUTO SCAN ============ -->
+    <div class="tab-content" id="tab-auto">
+      <div class="controls" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="control-group"><label>Nguồn dữ liệu</label><select id="aExchange">
+            <option value="mexc_futures">MEXC Futures</option>
+            <option value="binance_spot">Binance Spot</option>
+          </select></div>
+        <div class="control-group"><label>Cặp giao dịch</label>
+          <div class="symbol-search-wrap" id="aSymbolWrap"><input type="text" class="symbol-input" id="aSymbol"
+              value="BTC_USDT" placeholder="VD: BTC_USDT" autocomplete="off">
+            <div class="symbol-dropdown" id="aSymbolDropdown"></div>
+          </div>
+        </div>
+        <div class="control-group"><label>Loại MA Nhanh</label><select id="aFastType">
+            <option value="EMA" selected>EMA</option>
+            <option value="SMA">SMA</option>
+            <option value="WMA">WMA</option>
+            <option value="DEMA">DEMA</option>
+            <option value="TEMA">TEMA</option>
+            <option value="HullMA">HullMA</option>
+            <option value="SMMA">SMMA</option>
+            <option value="ZEMA">ZEMA</option>
+            <option value="TMA">TMA</option>
+            <option value="SSMA">SSMA</option>
+            <option value="LINREG">LINREG</option>
+          </select></div>
+        <div class="control-group"><label>Loại MA Chậm</label><select id="aSlowType">
+            <option value="EMA" selected>EMA</option>
+            <option value="SMA">SMA</option>
+            <option value="WMA">WMA</option>
+            <option value="DEMA">DEMA</option>
+            <option value="TEMA">TEMA</option>
+            <option value="HullMA">HullMA</option>
+            <option value="SMMA">SMMA</option>
+            <option value="ZEMA">ZEMA</option>
+            <option value="TMA">TMA</option>
+            <option value="SSMA">SSMA</option>
+            <option value="LINREG">LINREG</option>
+          </select></div>
+        <div class="control-group"><label>Số nến / khung</label><select id="aCandles">
+            <option value="5000">5,000</option>
+            <option value="10000" selected>10,000</option>
+            <option value="20000">20,000</option>
+          </select></div>
+        <div class="control-group"><label>Phí (%/lệnh)</label><select id="aFee">
+            <option value="0" selected>0%</option>
+            <option value="0.02">0.02%</option>
+            <option value="0.04">0.04%</option>
+            <option value="0.1">0.1%</option>
+          </select></div>
+        <div class="control-group"><label>MA Nhanh (min → max)</label>
+          <div class="dual-input"><input type="number" id="aFastMin" value="2" min="2"><input type="number"
+              id="aFastMax" value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>MA Chậm (min → max)</label>
+          <div class="dual-input"><input type="number" id="aSlowMin" value="2" min="2"><input type="number"
+              id="aSlowMax" value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>Bước nhảy (Nhanh / Chậm)</label>
+          <div class="dual-input"><input type="number" id="aFastStep" value="1" min="1"><input type="number"
+              id="aSlowStep" value="1" min="1"></div>
+        </div>
+        <div class="control-group" style="grid-column:1/-1">
+          <label>Chọn khung thời gian cần quét</label>
+          <div id="aTfCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="5m"> 5m</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="15m" checked> 15m</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="30m" checked> 30m</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="1h" checked> 1h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="2h" checked> 2h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="4h" checked> 4h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="12h"> 12h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="1d"> 1d</label>
+          </div>
+        </div>
+        <button class="btn-run" id="btnAutoScan" onclick="startAutoScan()">🚀 QUÉT TỰ ĐỘNG ĐA KHUNG</button>
+      </div>
+      <div class="progress-wrap" id="autoProgressWrap">
+        <div class="progress-info"><span id="autoProgressText">Sẵn sàng</span><span id="autoProgressPct">0%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="autoProgressFill"></div>
+        </div>
+        <div id="autoTfStatus" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
+        <div class="log-area" id="autoLogArea"></div>
+      </div>
+      <div id="autoResults" style="display:none">
+        <div class="auto-summary">
+          <div class="panel-header">📊 Tổng hợp — Tham số tốt nhất từng khung</div>
+          <div class="panel-body">
+            <table class="auto-table">
+              <thead>
+                <tr>
+                  <th>Khung</th>
+                  <th>Fast</th>
+                  <th>Slow</th>
+                  <th>Lợi nhuận</th>
+                  <th>Thắng</th>
+                  <th>Lệnh</th>
+                  <th>PF</th>
+                  <th>DD%</th>
+                  <th>Sharpe</th>
+                  <th>Nến</th>
+                  <th>Đánh giá</th>
+                </tr>
+              </thead>
+              <tbody id="autoSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="auto-summary">
+          <div class="panel-header">🏆 Khuyến nghị — Khung và tham số tối ưu nhất</div>
+          <div class="panel-body" style="padding:20px" id="autoRecommendation"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TAB 3: COMBO MA SCAN ============ -->
+    <div class="tab-content" id="tab-combo">
+      <div class="controls" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="control-group"><label>Nguồn dữ liệu</label><select id="cExchange">
+            <option value="mexc_futures">MEXC Futures</option>
+            <option value="binance_spot">Binance Spot</option>
+          </select></div>
+        <div class="control-group"><label>Cặp giao dịch</label>
+          <div class="symbol-search-wrap" id="cSymbolWrap"><input type="text" class="symbol-input" id="cSymbol"
+              value="BTC_USDT" placeholder="VD: BTC_USDT" autocomplete="off">
+            <div class="symbol-dropdown" id="cSymbolDropdown"></div>
+          </div>
+        </div>
+        <div class="control-group"><label>Khung thời gian</label>
+          <select id="cTimeframe">
+            <option value="5m">5 phút</option>
+            <option value="15m" selected>15 phút</option>
+            <option value="30m">30 phút</option>
+            <option value="1h">1 giờ</option>
+            <option value="2h">2 giờ</option>
+            <option value="4h">4 giờ</option>
+            <option value="1d">1 ngày</option>
+          </select>
+        </div>
+        <div class="control-group"><label>Số nến</label><select id="cCandles">
+            <option value="5000">5,000</option>
+            <option value="10000" selected>10,000</option>
+            <option value="20000">20,000</option>
+          </select></div>
+        <div class="control-group"><label>Phí (%/lệnh)</label><select id="cFee">
+            <option value="0" selected>0%</option>
+            <option value="0.02">0.02%</option>
+            <option value="0.04">0.04%</option>
+            <option value="0.1">0.1%</option>
+          </select></div>
+        <div class="control-group"><label>MA Nhanh (min → max)</label>
+          <div class="dual-input"><input type="number" id="cFastMin" value="2" min="2"><input type="number"
+              id="cFastMax" value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>MA Chậm (min → max)</label>
+          <div class="dual-input"><input type="number" id="cSlowMin" value="2" min="2"><input type="number"
+              id="cSlowMax" value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>Bước nhảy (Nhanh / Chậm)</label>
+          <div class="dual-input"><input type="number" id="cFastStep" value="1" min="1"><input type="number"
+              id="cSlowStep" value="1" min="1"></div>
+        </div>
+        <div class="control-group" style="grid-column:1/-1">
+          <label>Chọn loại MA cần quét (tick chọn nhiều)</label>
+          <div id="cMACheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="EMA" checked> EMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="SMA" checked> SMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="WMA" checked> WMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="DEMA" checked> DEMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="TEMA" checked> TEMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="HullMA" checked> HullMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="SMMA" checked> SMMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="ZEMA" checked> ZEMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="TMA" checked> TMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="SSMA" checked> SSMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="LINREG" checked> LINREG</label>
+          </div>
+        </div>
+        <button class="btn-run" id="btnComboScan" onclick="startComboScan()">🧬 QUÉT TỔ HỢP TẤT CẢ LOẠI MA</button>
+      </div>
+      <div class="progress-wrap" id="comboProgressWrap">
+        <div class="progress-info"><span id="comboProgressText">Sẵn sàng</span><span id="comboProgressPct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="comboProgressFill"></div>
+        </div>
+        <div id="comboComboStatus" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
+        <div class="log-area" id="comboLogArea"></div>
+      </div>
+      <div id="comboResults" style="display:none">
+        <!-- Bảng xếp hạng tổ hợp MA -->
+        <div class="auto-summary">
+          <div class="panel-header">🧬 Xếp hạng tổ hợp MA — Tốt nhất của mỗi cặp loại đường</div>
+          <div class="panel-body">
+            <table class="auto-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>MA Nhanh</th>
+                  <th>MA Chậm</th>
+                  <th>Fast Len</th>
+                  <th>Slow Len</th>
+                  <th>Lợi nhuận</th>
+                  <th>Thắng</th>
+                  <th>Lệnh</th>
+                  <th>PF</th>
+                  <th>DD%</th>
+                  <th>Sharpe</th>
+                  <th>Đánh giá</th>
+                </tr>
+              </thead>
+              <tbody id="comboSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Heatmap tổ hợp MA type -->
+        <div class="auto-summary">
+          <div class="panel-header">🗺️ Bản đồ nhiệt — So sánh tổ hợp loại MA (Sharpe)</div>
+          <div class="panel-body">
+            <div class="metric-selector" id="comboMetricSelector"><button class="metric-btn active"
+                onclick="switchComboMetric('sharpe',this)">Sharpe</button><button class="metric-btn"
+                onclick="switchComboMetric('profit',this)">LN%</button><button class="metric-btn"
+                onclick="switchComboMetric('winrate',this)">Thắng</button><button class="metric-btn"
+                onclick="switchComboMetric('pf',this)">PF</button><button class="metric-btn"
+                onclick="switchComboMetric('dd',this)">DD</button></div>
+            <div class="heatmap-container" id="comboHeatmapContainer"></div>
+          </div>
+        </div>
+        <!-- Khuyến nghị -->
+        <div class="auto-summary">
+          <div class="panel-header">🏆 Khuyến nghị — Tổ hợp MA tối ưu nhất</div>
+          <div class="panel-body" style="padding:20px" id="comboRecommendation"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TAB 4: FULL SCAN (AUTO + COMBO) ============ -->
+    <div class="tab-content" id="tab-full">
+      <div class="controls" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="control-group"><label>Nguồn dữ liệu</label><select id="fExchange">
+            <option value="mexc_futures">MEXC Futures</option>
+            <option value="binance_spot">Binance Spot</option>
+          </select></div>
+        <div class="control-group"><label>Cặp giao dịch</label>
+          <div class="symbol-search-wrap" id="fSymbolWrap"><input type="text" class="symbol-input" id="fSymbol"
+              value="BTC_USDT" placeholder="VD: BTC_USDT" autocomplete="off">
+            <div class="symbol-dropdown" id="fSymbolDropdown"></div>
+          </div>
+        </div>
+        <div class="control-group"><label>Số nến / khung</label><select id="fCandles">
+            <option value="5000">5,000</option>
+            <option value="10000" selected>10,000</option>
+            <option value="20000">20,000</option>
+          </select></div>
+        <div class="control-group"><label>Phí (%/lệnh)</label><select id="fFee">
+            <option value="0" selected>0%</option>
+            <option value="0.02">0.02%</option>
+            <option value="0.04">0.04%</option>
+            <option value="0.1">0.1%</option>
+          </select></div>
+        <div class="control-group"><label>MA Nhanh (min → max)</label>
+          <div class="dual-input"><input type="number" id="fFastMin" value="2" min="2"><input type="number"
+              id="fFastMax" value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>MA Chậm (min → max)</label>
+          <div class="dual-input"><input type="number" id="fSlowMin" value="2" min="2"><input type="number"
+              id="fSlowMax" value="300" min="2"></div>
+        </div>
+        <div class="control-group"><label>Bước nhảy (Nhanh / Chậm)</label>
+          <div class="dual-input"><input type="number" id="fFastStep" value="1" min="1"><input type="number"
+              id="fSlowStep" value="1" min="1"></div>
+        </div>
+        <div class="control-group" style="grid-column:1/-1">
+          <label>Chọn loại MA cần quét (tick chọn nhiều)</label>
+          <div id="fMACheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="EMA" checked> EMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="SMA" checked> SMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="WMA" checked> WMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="DEMA" checked> DEMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="TEMA" checked> TEMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="HullMA" checked> HullMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="SMMA" checked> SMMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="ZEMA" checked> ZEMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="TMA" checked> TMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="SSMA" checked> SSMA</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="LINREG" checked> LINREG</label>
+          </div>
+        </div>
+        <div class="control-group" style="grid-column:1/-1">
+          <label>Chọn khung thời gian cần quét</label>
+          <div id="fTfCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="5m"> 5m</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="15m" checked> 15m</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="30m" checked> 30m</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="1h" checked> 1h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="2h" checked> 2h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="4h" checked> 4h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="12h"> 12h</label>
+            <label
+              style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px"><input
+                type="checkbox" value="1d"> 1d</label>
+          </div>
+        </div>
+        <button class="btn-run" id="btnFullScan" onclick="startFullScan()">🔥 QUÉT TOÀN DIỆN — ĐA KHUNG × TẤT CẢ COMBO
+          MA</button>
+      </div>
+      <div class="progress-wrap" id="fullProgressWrap">
+        <div class="progress-info"><span id="fullProgressText">Sẵn sàng</span><span id="fullProgressPct">0%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="fullProgressFill"></div>
+        </div>
+        <div id="fullTfStatus" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
+        <div class="log-area" id="fullLogArea"></div>
+      </div>
+      <div id="fullResults" style="display:none">
+        <!-- Bảng tổng hợp: mỗi TF → best MA combo -->
+        <div class="auto-summary">
+          <div class="panel-header">📊 Tổng hợp — Combo MA tốt nhất từng khung thời gian</div>
+          <div class="panel-body">
+            <table class="auto-table">
+              <thead>
+                <tr>
+                  <th>Khung</th>
+                  <th>MA Nhanh</th>
+                  <th>MA Chậm</th>
+                  <th>Fast Len</th>
+                  <th>Slow Len</th>
+                  <th>Lợi nhuận</th>
+                  <th>Thắng</th>
+                  <th>Lệnh</th>
+                  <th>PF</th>
+                  <th>DD%</th>
+                  <th>Sharpe</th>
+                  <th>Nến</th>
+                  <th>Đánh giá</th>
+                </tr>
+              </thead>
+              <tbody id="fullSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Chi tiết từng TF -->
+        <div id="fullDetailPanels"></div>
+        <!-- Khuyến nghị tổng -->
+        <div class="auto-summary">
+          <div class="panel-header">🏆 Khuyến nghị — Khung + Combo MA tối ưu nhất</div>
+          <div class="panel-body" style="padding:20px" id="fullRecommendation"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tooltip" id="tooltip"></div>
+  <div class="server-status" id="serverStatus"></div>
+
+  <script>
+    // ========== GLOBALS ==========
+    let allResults = [], fastLens = [], slowLens = [], mexcFutSymbols = [], binanceSymbols = [], selectedSymbol = 'BTC_USDT', searchTimeout = null;
+    let cachedStableZones = null;
+    let currentExchange = 'mexc_futures';
+
+    // ========== TABS ==========
+    function switchTab(t) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      // Activate the right button
+      const labels = { 'manual': 'thủ công', 'auto': 'đa khung', 'combo': 'tổ hợp', 'full': 'toàn diện' };
+      document.querySelectorAll('.tab-btn').forEach(b => { if (b.textContent.includes(labels[t])) b.classList.add('active'); });
+      document.getElementById('tab-' + t).classList.add('active');
+    }
+
+    // ========== SERVER ==========
+    async function checkServer() {
+      const el = document.getElementById('serverStatus');
+      try { const r = await fetch('/api/mexc/ticker', { signal: AbortSignal.timeout(5000) }); if (r.ok) { el.className = 'server-status server-ok'; el.textContent = '☁️ Server OK'; return true; } } catch (e) { }
+      el.className = 'server-status server-err'; el.innerHTML = '❌ Server offline — chạy: python server.py'; return false;
+    }
+
+    // ========== EXCHANGE ==========
+    function onExchangeChange() {
+      currentExchange = document.getElementById('exchangeSelect').value;
+      const inp = document.getElementById('symbolInput');
+      if (currentExchange === 'mexc_futures') { inp.value = 'BTC_USDT'; selectedSymbol = 'BTC_USDT'; }
+      else { inp.value = 'BTCUSDT'; selectedSymbol = 'BTCUSDT'; }
+    }
+
+    // ========== SYMBOLS ==========
+    async function loadSymbols() {
+      try { const r = await fetch('/api/mexc/ticker'); const d = await r.json(); if (d.success && d.data) { mexcFutSymbols = d.data.filter(t => t.symbol && t.symbol.endsWith('_USDT')).map(t => ({ symbol: t.symbol, price: +t.lastPrice || 0, change: (+t.riseFallRate || 0) * 100, volume: +t.volume24 || 0 })).sort((a, b) => b.volume - a.volume); } } catch (e) { }
+      try { const r = await fetch('/api/binance/ticker'); const d = await r.json(); binanceSymbols = d.filter(t => t.symbol.endsWith('USDT')).map(t => ({ symbol: t.symbol, price: +t.lastPrice, change: +t.priceChangePercent, volume: +t.quoteVolume })).sort((a, b) => b.volume - a.volume); } catch (e) { }
+    }
+    function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(4) : p >= .001 ? p.toFixed(6) : p.toFixed(8) }
+    function selSym(s, target) { selectedSymbol = s; if (target === 'auto') { document.getElementById('aSymbol').value = s; document.getElementById('aSymbolDropdown').classList.remove('show'); } else if (target === 'combo') { document.getElementById('cSymbol').value = s; document.getElementById('cSymbolDropdown').classList.remove('show'); } else if (target === 'full') { document.getElementById('fSymbol').value = s; document.getElementById('fSymbolDropdown').classList.remove('show'); } else { document.getElementById('symbolInput').value = s; document.getElementById('symbolDropdown').classList.remove('show'); } }
+    function showDDFor(q, ddId, selTarget) {
+      const dd = document.getElementById(ddId); if (!q || q.length < 1) { dd.classList.remove('show'); return; }
+      const u = q.toUpperCase(), exSel = selTarget === 'auto' ? document.getElementById('aExchange').value : selTarget === 'combo' ? document.getElementById('cExchange').value : selTarget === 'full' ? document.getElementById('fExchange').value : currentExchange;
+      const isFut = exSel === 'mexc_futures', list = isFut ? mexcFutSymbols : binanceSymbols, sfx = isFut ? '_USDT' : 'USDT';
+      const m = list.filter(s => s.symbol.includes(u) || s.symbol.replace(sfx, '').includes(u)).slice(0, 15);
+      if (!m.length) { dd.innerHTML = '<div class="symbol-loading">Không tìm thấy</div>'; dd.classList.add('show'); return; }
+      const badge = isFut ? '<span class="exchange-badge badge-mexc">FUT</span>' : '<span class="exchange-badge badge-binance">SPOT</span>';
+      dd.innerHTML = m.map((s, i) => { const base = s.symbol.replace(sfx, ''); const tag = i < 3 ? '<span class="symbol-tag tag-top">TOP</span>' : s.change > 5 ? '<span class="symbol-tag tag-hot">HOT</span>' : ''; const cc = s.change >= 0 ? 'change-pos' : 'change-neg'; return `<div class="symbol-item" onclick="selSym('${s.symbol}','${selTarget}')"><span class="pair">${base}/USDT ${tag}${badge}</span><span>${s.price ? fmtP(s.price) : ''} <span class="${cc}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</span></span></div>`; }).join('');
+      dd.classList.add('show');
+    }
+    document.getElementById('symbolInput').addEventListener('input', e => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showDDFor(e.target.value, 'symbolDropdown', 'manual'), 150); });
+    document.getElementById('symbolInput').addEventListener('focus', e => { if (e.target.value) showDDFor(e.target.value, 'symbolDropdown', 'manual'); });
+    document.getElementById('symbolInput').addEventListener('blur', function () { setTimeout(() => { let v = this.value.toUpperCase().trim(); if (currentExchange === 'mexc_futures') { if (v && !v.includes('_USDT')) v = v.replace('USDT', '') + '_USDT'; } else { if (v && !v.endsWith('USDT')) v = v.replace('_', '') + 'USDT'; } this.value = v; selectedSymbol = v; }, 200); });
+    document.getElementById('aSymbol').addEventListener('input', e => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showDDFor(e.target.value, 'aSymbolDropdown', 'auto'), 150); });
+    document.getElementById('aSymbol').addEventListener('focus', e => { if (e.target.value) showDDFor(e.target.value, 'aSymbolDropdown', 'auto'); });
+    document.getElementById('aSymbol').addEventListener('blur', function () { setTimeout(() => { let v = this.value.toUpperCase().trim(); const ex = document.getElementById('aExchange').value; if (ex === 'mexc_futures') { if (v && !v.includes('_USDT')) v = v.replace('USDT', '') + '_USDT'; } else { if (v && !v.endsWith('USDT')) v = v.replace('_', '') + 'USDT'; } this.value = v; }, 200); });
+    document.addEventListener('click', e => { if (!e.target.closest('.symbol-search-wrap')) { document.getElementById('symbolDropdown').classList.remove('show'); document.getElementById('aSymbolDropdown').classList.remove('show'); document.getElementById('cSymbolDropdown').classList.remove('show'); document.getElementById('fSymbolDropdown').classList.remove('show'); } });
+    document.getElementById('aExchange').addEventListener('change', function () { const inp = document.getElementById('aSymbol'); if (this.value === 'mexc_futures') { inp.value = 'BTC_USDT'; } else { inp.value = 'BTCUSDT'; } });
+    // Combo tab symbol events
+    document.getElementById('cSymbol').addEventListener('input', e => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showDDFor(e.target.value, 'cSymbolDropdown', 'combo'), 150); });
+    document.getElementById('cSymbol').addEventListener('focus', e => { if (e.target.value) showDDFor(e.target.value, 'cSymbolDropdown', 'combo'); });
+    document.getElementById('cSymbol').addEventListener('blur', function () { setTimeout(() => { let v = this.value.toUpperCase().trim(); const ex = document.getElementById('cExchange').value; if (ex === 'mexc_futures') { if (v && !v.includes('_USDT')) v = v.replace('USDT', '') + '_USDT'; } else { if (v && !v.endsWith('USDT')) v = v.replace('_', '') + 'USDT'; } this.value = v; }, 200); });
+    document.getElementById('cExchange').addEventListener('change', function () { const inp = document.getElementById('cSymbol'); if (this.value === 'mexc_futures') { inp.value = 'BTC_USDT'; } else { inp.value = 'BTCUSDT'; } });
+    // Full scan tab symbol events
+    document.getElementById('fSymbol').addEventListener('input', e => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showDDFor(e.target.value, 'fSymbolDropdown', 'full'), 150); });
+    document.getElementById('fSymbol').addEventListener('focus', e => { if (e.target.value) showDDFor(e.target.value, 'fSymbolDropdown', 'full'); });
+    document.getElementById('fSymbol').addEventListener('blur', function () { setTimeout(() => { let v = this.value.toUpperCase().trim(); const ex = document.getElementById('fExchange').value; if (ex === 'mexc_futures') { if (v && !v.includes('_USDT')) v = v.replace('USDT', '') + '_USDT'; } else { if (v && !v.endsWith('USDT')) v = v.replace('_', '') + 'USDT'; } this.value = v; }, 200); });
+    document.getElementById('fExchange').addEventListener('change', function () { const inp = document.getElementById('fSymbol'); if (this.value === 'mexc_futures') { inp.value = 'BTC_USDT'; } else { inp.value = 'BTCUSDT'; } });
+
+    // ========== UTILS ==========
+    function log(m, t = '') { const e = document.getElementById('logArea'); if (!e) return; e.innerHTML += `<span${t ? ` class="${t}"` : ''}>` + m + '</span>\n'; e.scrollTop = e.scrollHeight; }
+    function alog(m, t = '') { const e = document.getElementById('autoLogArea'); if (!e) return; e.innerHTML += `<span${t ? ` class="${t}"` : ''}>` + m + '</span>\n'; e.scrollTop = e.scrollHeight; }
+    function setProg(p, t) { document.getElementById('progressFill').style.width = p + '%'; document.getElementById('progressPct').textContent = Math.round(p) + '%'; if (t) document.getElementById('progressText').textContent = t; }
+    function setAutoProg(p, t) { document.getElementById('autoProgressFill').style.width = p + '%'; document.getElementById('autoProgressPct').textContent = Math.round(p) + '%'; if (t) document.getElementById('autoProgressText').textContent = t; }
+
+    // ========== DATA FETCHING ==========
+    function mexcItv(tf) { return { '1m': 'Min1', '3m': 'Min3', '5m': 'Min5', '15m': 'Min15', '30m': 'Min30', '1h': 'Min60', '4h': 'Hour4', '8h': 'Hour8', '1d': 'Day1', '1w': 'Week1', '1M': 'Month1' }[tf] || null; }
+    function needsAgg(tf) { return ['2h', '6h', '12h', '3d'].includes(tf); }
+    function aggBase(tf) { return { '2h': '1h', '6h': '4h', '12h': '8h', '3d': '1d' }[tf]; }
+    function aggMin(tf) { return { '2h': 120, '6h': 360, '12h': 720, '3d': 4320 }[tf] || 0; }
+    async function fetchKlines(exchange, sym, tf, target, logFn) {
+      if (!logFn) logFn = log;
+      let baseTf = tf, doAgg = false, am = 0;
+      if (needsAgg(tf)) { doAgg = true; baseTf = aggBase(tf); am = aggMin(tf); }
+      let url, label;
+      if (exchange === 'mexc_futures') { const itv = mexcItv(baseTf); if (!itv) throw new Error('Khung không hỗ trợ: ' + tf); url = `/api/mexc/klines?symbol=${sym}&interval=${itv}&limit=${doAgg ? target * 10 : target}`; label = 'MEXC Futures'; }
+      else { url = `/api/binance/klines?symbol=${sym}&interval=${doAgg ? baseTf : tf}&limit=${doAgg ? target * 10 : target}`; label = 'Binance'; }
+      logFn(`Đang tải ${target.toLocaleString()} nến ${sym} ${tf} từ ${label}...`, 'info');
+      const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json(); if (d.error) throw new Error(d.error);
+      let a = d.map(x => ({ time: +x[0], open: +x[1], high: +x[2], low: +x[3], close: +x[4], volume: +x[5] }));
+      if (doAgg && am > 0) { a = aggregateCandles(a, am); }
+      const from = a.length ? new Date(a[0].time).toLocaleDateString('vi-VN') : '?';
+      const to = a.length ? new Date(a[a.length - 1].time).toLocaleDateString('vi-VN') : '?';
+      logFn(`✓ ${a.length.toLocaleString()} nến (${from} → ${to})`, 'ok');
+      return a;
+    }
+    function aggregateCandles(c, min) { const r = [], ms = min * 60 * 1000; let i = 0; while (i < c.length) { const b = Math.floor(c[i].time / ms) * ms; let o = c[i].open, h = c[i].high, l = c[i].low, cl = c[i].close, v = c[i].volume; i++; while (i < c.length && Math.floor(c[i].time / ms) * ms === b) { h = Math.max(h, c[i].high); l = Math.min(l, c[i].low); cl = c[i].close; v += c[i].volume; i++; } r.push({ time: b, open: o, high: h, low: l, close: cl, volume: v }); } return r; }
+
+    // ========== MA INDICATOR LIBRARY ==========
+    function calcSMA(src, len) { const n = src.length, r = new Float64Array(n); let s = 0; for (let i = 0; i < n; i++) { s += src[i]; if (i >= len) s -= src[i - len]; r[i] = i >= len - 1 ? s / len : s / (i + 1); } return r; }
+    function calcEMA(src, len) { const n = src.length, k = 2 / (len + 1), r = new Float64Array(n); if (n === 0) return r; let s = 0; for (let i = 0; i < Math.min(len, n); i++) { s += src[i]; r[i] = src[i]; } if (len <= n) r[len - 1] = s / len; for (let i = len; i < n; i++)r[i] = src[i] * k + r[i - 1] * (1 - k); return r; }
+    function calcWMA(src, len) { const n = src.length, r = new Float64Array(n), denom = len * (len + 1) / 2; for (let i = 0; i < n; i++) { if (i < len - 1) { r[i] = src[i]; continue; } let s = 0; for (let j = 0; j < len; j++)s += src[i - j] * (len - j); r[i] = s / denom; } return r; }
+    function calcDEMA(src, len) { const e1 = calcEMA(src, len), e2 = calcEMA(e1, len), n = src.length, r = new Float64Array(n); for (let i = 0; i < n; i++)r[i] = 2 * e1[i] - e2[i]; return r; }
+    function calcTEMA(src, len) { const e1 = calcEMA(src, len), e2 = calcEMA(e1, len), e3 = calcEMA(e2, len), n = src.length, r = new Float64Array(n); for (let i = 0; i < n; i++)r[i] = 3 * (e1[i] - e2[i]) + e3[i]; return r; }
+    function calcSMMA(src, len) { const n = src.length, r = new Float64Array(n); let s = 0; for (let i = 0; i < Math.min(len, n); i++)s += src[i]; if (len <= n) r[len - 1] = s / len; for (let i = len; i < n; i++)r[i] = (r[i - 1] * (len - 1) + src[i]) / len; for (let i = 0; i < len - 1; i++)r[i] = r[len - 1]; return r; }
+    function calcHullMA(src, len) { const half = Math.max(1, Math.floor(len / 2)), sq = Math.max(1, Math.round(Math.sqrt(len))); const w1 = calcWMA(src, half), w2 = calcWMA(src, len), n = src.length, diff = new Float64Array(n); for (let i = 0; i < n; i++)diff[i] = 2 * w1[i] - w2[i]; return calcWMA(diff, sq); }
+    function calcZEMA(src, len) { const n = src.length, lag = Math.floor((len - 1) / 2), zs = new Float64Array(n); for (let i = 0; i < n; i++) { const li = i - lag; zs[i] = src[i] + (li >= 0 ? src[i] - src[li] : 0); } return calcEMA(zs, len); }
+    function calcTMA(src, len) { return calcSMA(calcSMA(src, len), len); }
+    function calcSSMA(src, len) { const n = src.length, a1 = Math.exp(-1.414 * 3.14159 / len), b1 = 2 * a1 * Math.cos(1.414 * 3.14159 / len), c2 = b1, c3 = -a1 * a1, c1 = 1 - c2 - c3, r = new Float64Array(n); if (n > 0) r[0] = src[0]; if (n > 1) r[1] = c1 * (src[1] + src[0]) / 2 + c2 * r[0]; for (let i = 2; i < n; i++)r[i] = c1 * (src[i] + src[i - 1]) / 2 + c2 * r[i - 1] + c3 * r[i - 2]; return r; }
+    function calcLINREG(src, len) { const n = src.length, r = new Float64Array(n); for (let i = 0; i < n; i++) { if (i < len - 1) { r[i] = src[i]; continue; } let sx = 0, sy = 0, sxy = 0, sx2 = 0; for (let j = 0; j < len; j++) { const x = j, y = src[i - len + 1 + j]; sx += x; sy += y; sxy += x * y; sx2 += x * x; } const m = (len * sxy - sx * sy) / (len * sx2 - sx * sx); const b2 = (sy - m * sx) / len; r[i] = m * (len - 1) + b2; } return r; }
+
+    function calcMA(type, src, len) {
+      if (len < 2) return new Float64Array(src);
+      switch (type) {
+        case 'SMA': return calcSMA(src, len); case 'EMA': return calcEMA(src, len); case 'WMA': return calcWMA(src, len);
+        case 'DEMA': return calcDEMA(src, len); case 'TEMA': return calcTEMA(src, len); case 'HullMA': return calcHullMA(src, len);
+        case 'SMMA': return calcSMMA(src, len); case 'ZEMA': return calcZEMA(src, len); case 'TMA': return calcTMA(src, len);
+        case 'SSMA': return calcSSMA(src, len); case 'LINREG': return calcLINREG(src, len);
+        default: return calcEMA(src, len);
+      }
+    }
+
+    // ========== BACKTEST: MA CLOUD STRATEGY ==========
+    // Logic: Long khi open+close > cloudTop, Short khi open+close < cloudBot, giữ nguyên khi trong mây
+    function bt(kl, fastLen, slowLen, fastType, slowType, fee) {
+      const n = kl.length;
+      const warmup = Math.max(fastLen, slowLen) * 2;
+      if (n < warmup + 20) return null;
+      // Ensure fastLen < slowLen
+      if (fastLen >= slowLen) return null;
+
+      const C = new Float64Array(n), O = new Float64Array(n);
+      for (let i = 0; i < n; i++) { C[i] = kl[i].close; O[i] = kl[i].open; }
+
+      const fastMA = calcMA(fastType, C, fastLen);
+      const slowMA = calcMA(slowType, C, slowLen);
+
+      // Cloud boundaries
+      const cloudTop = new Float64Array(n), cloudBot = new Float64Array(n);
+      for (let i = 0; i < n; i++) { cloudTop[i] = Math.max(fastMA[i], slowMA[i]); cloudBot[i] = Math.min(fastMA[i], slowMA[i]); }
+
+      // Position tracking: 0=flat, 1=long, -1=short
+      const trades = [];
+      let pos = 0, ent = 0, eq = 1000, pk = 1000, mdd = 0;
+
+      for (let i = warmup; i < n; i++) {
+        const aboveCloud = C[i] > cloudTop[i] && O[i] > cloudTop[i];
+        const belowCloud = C[i] < cloudBot[i] && O[i] < cloudBot[i];
+
+        if (aboveCloud && pos !== 1) {
+          // Close short if any
+          if (pos === -1) { const raw = (ent - C[i]) / ent, net = raw - fee * 2; eq *= (1 + net); trades.push({ pnl: net * 100 }); }
+          pos = 1; ent = C[i];
+        } else if (belowCloud && pos !== -1) {
+          // Close long if any
+          if (pos === 1) { const raw = (C[i] - ent) / ent, net = raw - fee * 2; eq *= (1 + net); trades.push({ pnl: net * 100 }); }
+          pos = -1; ent = C[i];
+        }
+        // Floating equity for drawdown calc
+        let fe = eq;
+        if (pos === 1) fe = eq * (C[i] / ent);
+        else if (pos === -1) fe = eq * (2 - C[i] / ent);
+        if (fe > pk) pk = fe;
+        const dd = (pk - fe) / pk * 100;
+        if (dd > mdd) mdd = dd;
+      }
+      // Close open position
+      if (pos === 1) { const r = (C[n - 1] - ent) / ent; eq *= (1 + (r - fee * 2)); trades.push({ pnl: (r - fee * 2) * 100 }); }
+      else if (pos === -1) { const r = (ent - C[n - 1]) / ent; eq *= (1 + (r - fee * 2)); trades.push({ pnl: (r - fee * 2) * 100 }); }
+      if (eq > pk) pk = eq; const df = (pk - eq) / pk * 100; if (df > mdd) mdd = df;
+
+      const w = trades.filter(t => t.pnl > 0).length;
+      const gp = trades.filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0);
+      const gl = Math.abs(trades.filter(t => t.pnl <= 0).reduce((s, t) => s + t.pnl, 0));
+      const pf = gl > 0 ? gp / gl : gp > 0 ? 999 : 0;
+      const np = (eq - 1000) / 1000 * 100;
+      const avgT = trades.length > 0 ? np / trades.length : 0;
+      const sharpe = mdd > 0 ? np / mdd : (np > 0 ? 999 : 0);
+
+      return { fast: fastLen, slow: slowLen, profit: np, winrate: trades.length > 0 ? w / trades.length * 100 : 0, trades: trades.length, pf, dd: mdd, avgTrade: avgT, equity: eq, sharpe };
+    }
+
+    // ========== RUN OPTIMIZATION ==========
+    async function runSingleOpt(exchange, sym, tf, target, fMin, fMax, fStep, sMin, sMax, sStep, fastType, slowType, fee, logFn, progFn) {
+      const kl = await fetchKlines(exchange, sym, tf, target, logFn);
+      if (kl.length < 200) throw new Error('Không đủ dữ liệu');
+      const fLens = []; for (let l = fMin; l <= fMax; l += fStep)fLens.push(l);
+      const sLens = []; for (let l = sMin; l <= sMax; l += sStep)sLens.push(l);
+      // Only test combos where fast < slow
+      let combos = [];
+      for (const f of fLens) for (const s of sLens) if (f < s) combos.push([f, s]);
+      const tot = combos.length, res = []; let done = 0;
+      logFn(`Đang test ${tot} tổ hợp (${fastType}×${slowType})...`, 'info');
+      for (const [f, s] of combos) {
+        const r = bt(kl, f, s, fastType, slowType, fee);
+        if (r) res.push(r);
+        done++;
+        if (done % 50 === 0) { if (progFn) progFn(done / tot); await new Promise(r => setTimeout(r, 0)); }
+      }
+      return { results: res, candles: kl.length, fastLens: fLens, slowLens: sLens };
+    }
+
+    // ========== STABILITY ==========
+    function computeStableZones() { const lk = {}; for (const r of allResults) lk[`${r.fast}_${r.slow}`] = r; const sk = new Set(); for (const r of allResults) { if (r.profit <= 0) continue; let nb = 0, gn = 0; const fi = fastLens.indexOf(r.fast), si = slowLens.indexOf(r.slow); for (const df of [-1, 0, 1]) for (const ds of [-1, 0, 1]) { if (!df && !ds) continue; if (fi + df >= 0 && fi + df < fastLens.length && si + ds >= 0 && si + ds < slowLens.length) { nb++; const k = `${fastLens[fi + df]}_${slowLens[si + ds]}`; if (lk[k] && lk[k].profit > 0) gn++; } } if (nb > 0 && gn / nb >= .6) sk.add(`${r.fast}_${r.slow}`); } return sk; }
+    function stableZones() { if (!cachedStableZones) cachedStableZones = computeStableZones(); return cachedStableZones; }
+    function recommend(sk) { const sr = allResults.filter(r => sk.has(`${r.fast}_${r.slow}`) && r.profit > 0 && r.trades >= 5); if (sr.length) { sr.sort((a, b) => { const sa = a.sharpe * (a.trades >= 10 ? 1 : .7); const sb = b.sharpe * (b.trades >= 10 ? 1 : .7); return sb - sa; }); return sr[0]; } const fb = allResults.filter(r => r.profit > 0 && r.trades >= 5); if (fb.length) { fb.sort((a, b) => b.sharpe - a.sharpe); return fb[0]; } return allResults[0]; }
+
+    // ========== MANUAL OPTIMIZATION ==========
+    async function startOptimization() {
+      const btn = document.getElementById('btnRun'); btn.disabled = true; btn.textContent = '⏳ ĐANG CHẠY...';
+      document.getElementById('progressWrap').classList.add('active');
+      ['statsRow', 'resultsGrid', 'guideCard'].forEach(id => document.getElementById(id).classList.remove('active'));
+      document.getElementById('dataInfo').style.display = 'none'; document.getElementById('logArea').innerHTML = '';
+      allResults = []; cachedStableZones = null;
+      const sym = selectedSymbol || document.getElementById('symbolInput').value.toUpperCase().trim();
+      const tf = document.getElementById('timeframe').value, exchange = document.getElementById('exchangeSelect').value;
+      const fType = document.getElementById('fastMAType').value, sType = document.getElementById('slowMAType').value;
+      const fMin = +document.getElementById('fastMin').value, fMax = +document.getElementById('fastMax').value, fStep = +document.getElementById('fastStep').value;
+      const sMin = +document.getElementById('slowMin').value, sMax = +document.getElementById('slowMax').value, sStep = +document.getElementById('slowStep').value;
+      const target = +document.getElementById('candleCount').value, fee = parseFloat(document.getElementById('feeRate').value) / 100;
+      try {
+        setProg(1, 'Đang tải dữ liệu...');
+        const t0 = performance.now();
+        const { results: res, candles: nc, fastLens: fl, slowLens: sl } = await runSingleOpt(exchange, sym, tf, target, fMin, fMax, fStep, sMin, sMax, sStep, fType, sType, fee, log, p => setProg(10 + p * 85));
+        allResults = res; fastLens = fl; slowLens = sl;
+        const el = ((performance.now() - t0) / 1000).toFixed(1);
+        log(`✓ Hoàn tất ${res.length} tổ hợp trong ${el}s`, 'ok');
+        const pc = res.filter(r => r.profit > 0).length; log(`📊 ${pc}/${res.length} có lời (${res.length > 0 ? (pc / res.length * 100).toFixed(1) : 0}%)`, 'ok');
+        setProg(100, 'Hoàn tất!');
+        if (!allResults.length) { log('Không có kết quả!', 'err'); btn.disabled = false; btn.textContent = '🚀 BẮT ĐẦU TỐI ƯU HÓA'; return; }
+        allResults.sort((a, b) => b.profit - a.profit);
+        const best = allResults[0], sk = stableZones(), rec = recommend(sk);
+        document.getElementById('guideCard').classList.add('active');
+        document.getElementById('dataInfo').style.display = 'block';
+        document.getElementById('diCandles').textContent = nc.toLocaleString();
+        document.getElementById('diExchange').textContent = exchange === 'mexc_futures' ? 'MEXC Futures' : 'Binance Spot';
+        document.getElementById('diRange').textContent = tf;
+        document.getElementById('diCombos').textContent = res.length.toLocaleString();
+        document.getElementById('diTime').textContent = el + 's';
+        document.getElementById('diFee').textContent = `Phí ${(fee * 100).toFixed(2)}%`;
+        document.getElementById('statsRow').classList.add('active');
+        document.getElementById('statProfit').textContent = best.profit.toFixed(2) + '%';
+        document.getElementById('statParams').textContent = `F=${best.fast}, S=${best.slow}`;
+        document.getElementById('statRecommend').textContent = `F=${rec.fast}, S=${rec.slow}`;
+        document.getElementById('statRecommendSub').textContent = `LN ${rec.profit.toFixed(1)}% | DD ${rec.dd.toFixed(1)}% | Sharpe ${rec.sharpe.toFixed(1)}`;
+        document.getElementById('statWinRate').textContent = rec.winrate.toFixed(1) + '%';
+        document.getElementById('statTrades').textContent = `${rec.trades} lệnh`;
+        document.getElementById('statPF').textContent = rec.pf > 50 ? '∞' : rec.pf.toFixed(2);
+        document.getElementById('statAvgTrade').textContent = `TB: ${rec.avgTrade.toFixed(2)}%`;
+        document.getElementById('statDD').textContent = rec.dd.toFixed(2) + '%';
+        document.getElementById('statDDPct').textContent = 'đề xuất';
+        document.getElementById('statMAType').textContent = `${fType}×${sType}`;
+        document.getElementById('statMATypeSub').textContent = 'MA Nhanh × MA Chậm';
+        document.getElementById('resultsGrid').classList.add('active'); renderHM('profit'); renderTT('sharpe');
+      } catch (e) { log('Lỗi: ' + e.message, 'err'); }
+      btn.disabled = false; btn.textContent = '🚀 BẮT ĐẦU TỐI ƯU HÓA';
+    }
+
+    // ========== AUTO SCAN ==========
+    let autoResults = {}, autoSelectedTfs = [];
+    async function startAutoScan() {
+      const btn = document.getElementById('btnAutoScan'); btn.disabled = true; btn.textContent = '⏳ ĐANG QUÉT...';
+      document.getElementById('autoProgressWrap').classList.add('active');
+      document.getElementById('autoLogArea').innerHTML = ''; document.getElementById('autoResults').style.display = 'none';
+      autoResults = {};
+      // Read selected timeframes
+      autoSelectedTfs = [];
+      document.querySelectorAll('#aTfCheckboxes input[type=checkbox]:checked').forEach(cb => autoSelectedTfs.push(cb.value));
+      if (autoSelectedTfs.length < 1) { alog('Cần chọn ít nhất 1 khung thời gian!', 'err'); btn.disabled = false; btn.textContent = '🚀 QUÉT TỰ ĐỘNG ĐA KHUNG'; return; }
+      const exchange = document.getElementById('aExchange').value;
+      let sym = document.getElementById('aSymbol').value.toUpperCase().trim();
+      if (exchange === 'mexc_futures' && !sym.includes('_USDT')) sym = sym.replace('USDT', '') + '_USDT';
+      if (exchange === 'binance_spot' && !sym.endsWith('USDT')) sym = sym.replace('_', '') + 'USDT';
+      document.getElementById('aSymbol').value = sym;
+      const target = +document.getElementById('aCandles').value, fee = parseFloat(document.getElementById('aFee').value) / 100;
+      const fType = document.getElementById('aFastType').value, sType = document.getElementById('aSlowType').value;
+      const fMin = +document.getElementById('aFastMin').value, fMax = +document.getElementById('aFastMax').value, fStep = +document.getElementById('aFastStep').value;
+      const sMin = +document.getElementById('aSlowMin').value, sMax = +document.getElementById('aSlowMax').value, sStep = +document.getElementById('aSlowStep').value;
+
+      function updateTfBadges(ci) { document.getElementById('autoTfStatus').innerHTML = autoSelectedTfs.map((tf, i) => i < ci ? `<span class="tf-status tf-done">✓ ${tf}</span>` : i === ci ? `<span class="tf-status tf-run">⏳ ${tf}...</span>` : `<span class="tf-status tf-wait">${tf}</span>`).join(''); }
+
+      const t0 = performance.now();
+      for (let i = 0; i < autoSelectedTfs.length; i++) {
+        const tf = autoSelectedTfs[i]; updateTfBadges(i);
+        setAutoProg((i / autoSelectedTfs.length) * 100, `Đang quét ${tf} (${i + 1}/${autoSelectedTfs.length})...`);
+        try {
+          const { results: res, candles: nc } = await runSingleOpt(exchange, sym, tf, target, fMin, fMax, fStep, sMin, sMax, sStep, fType, sType, fee, alog, p => setAutoProg(((i + p) / autoSelectedTfs.length) * 100));
+          const valid = res.filter(r => r.profit > 0 && r.trades >= 5);
+          valid.sort((a, b) => { const sa = a.sharpe * (a.trades >= 10 ? 1 : .7); const sb = b.sharpe * (b.trades >= 10 ? 1 : .7); return sb - sa; });
+          autoResults[tf] = { best: valid[0] || res.sort((a, b) => b.profit - a.profit)[0], candles: nc, totalCombos: res.length, profitable: res.filter(r => r.profit > 0).length };
+          alog(`✓ ${tf}: Best F=${autoResults[tf].best.fast} S=${autoResults[tf].best.slow} → ${autoResults[tf].best.profit.toFixed(1)}%`, 'ok');
+        } catch (e) {
+          alog(`✗ ${tf}: ${e.message}`, 'err');
+          autoResults[tf] = { best: { fast: 0, slow: 0, profit: 0, winrate: 0, trades: 0, pf: 0, dd: 0, sharpe: 0, avgTrade: 0 }, candles: 0, totalCombos: 0, profitable: 0, error: e.message };
+        }
+      }
+      updateTfBadges(autoSelectedTfs.length);
+      const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+      setAutoProg(100, `Hoàn tất ${elapsed}s`);
+      alog(`✓ Tổng thời gian: ${elapsed}s`, 'ok');
+      showAutoResults(sym, exchange, fType, sType);
+      btn.disabled = false; btn.textContent = '🚀 QUÉT TỰ ĐỘNG ĐA KHUNG';
+    }
+
+    function showAutoResults(sym, exchange, fType, sType) {
+      document.getElementById('autoResults').style.display = 'block';
+      let bestTf = '', bestSharpe = -Infinity;
+      for (const tf of autoSelectedTfs) { const r = autoResults[tf]; if (!r || r.error) continue; const s = r.best.sharpe * (r.best.trades >= 10 ? 1 : r.best.trades >= 5 ? .7 : .3); if (s > bestSharpe) { bestSharpe = s; bestTf = tf; } }
+      document.getElementById('autoSummaryBody').innerHTML = autoSelectedTfs.map(tf => {
+        const r = autoResults[tf]; if (!r) return '';
+        if (r.error) return `<tr><td>${tf}</td><td colspan="10" class="negative">Lỗi: ${r.error}</td></tr>`;
+        const b = r.best, isBest = tf === bestTf;
+        return `<tr class="${isBest ? 'best-row' : ''}"><td><strong>${tf}</strong></td><td>${b.fast}</td><td>${b.slow}</td><td class="${b.profit >= 0 ? 'positive' : 'negative'}">${b.profit.toFixed(2)}%</td><td>${b.winrate.toFixed(1)}%</td><td>${b.trades}</td><td>${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</td><td class="negative">${b.dd.toFixed(2)}%</td><td>${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</td><td>${r.candles.toLocaleString()}</td><td>${isBest ? '<span class="best-badge">⭐ TỐT NHẤT</span>' : r.profitable + '/' + r.totalCombos + ' có lời'}</td></tr>`;
+      }).join('');
+      if (bestTf && autoResults[bestTf]) {
+        const b = autoResults[bestTf].best;
+        document.getElementById('autoRecommendation').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+        <div class="stat-card yellow"><div class="stat-label">Khung tối ưu</div><div class="stat-value">${bestTf}</div><div class="stat-sub">${sym} — ${exchange === 'mexc_futures' ? 'MEXC Futures' : 'Binance'}</div></div>
+        <div class="stat-card green"><div class="stat-label">Tham số đề xuất</div><div class="stat-value">F=${b.fast}, S=${b.slow}</div><div class="stat-sub">LN ${b.profit.toFixed(2)}% | ${fType}×${sType}</div></div>
+        <div class="stat-card blue"><div class="stat-label">Tỷ lệ thắng</div><div class="stat-value">${b.winrate.toFixed(1)}%</div><div class="stat-sub">${b.trades} lệnh</div></div>
+        <div class="stat-card purple"><div class="stat-label">Sharpe / PF</div><div class="stat-value">${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</div><div class="stat-sub">PF: ${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</div></div>
+        <div class="stat-card red"><div class="stat-label">Sụt giảm vốn</div><div class="stat-value">${b.dd.toFixed(2)}%</div><div class="stat-sub">Max drawdown</div></div>
+      </div>
+      <p style="margin-top:16px;color:var(--text2);font-size:13px">💡 Trên ${autoResults[bestTf].candles.toLocaleString()} nến, khung <strong style="color:var(--yellow)">${bestTf}</strong> cho Sharpe cao nhất. Dùng <strong style="color:var(--accent)">MA Nhanh (${fType})=${b.fast}, MA Chậm (${sType})=${b.slow}</strong> trên TradingView.</p>`;
+      } else {
+        document.getElementById('autoRecommendation').innerHTML = '<p class="negative">Không tìm được tham số phù hợp.</p>';
+      }
+    }
+
+    // ========== HEATMAP ==========
+    function renderHM(met) { const c = document.getElementById('heatmapContainer'), sk = stableZones(), lk = {}; let mn = Infinity, mx = -Infinity; for (const r of allResults) { const k = `${r.fast}_${r.slow}`; let v; switch (met) { case 'profit': v = r.profit; break; case 'winrate': v = r.winrate; break; case 'pf': v = Math.min(r.pf, 10); break; case 'dd': v = -r.dd; break; case 'trades': v = r.trades; break; case 'sharpe': v = Math.min(r.sharpe, 20); break; }lk[k] = { v, r }; if (v < mn) mn = v; if (v > mx) mx = v; } const rec = recommend(sk), rk = `${rec.fast}_${rec.slow}`; let h = '<table><thead><tr><th style="position:sticky;left:0;z-index:3;background:var(--bg2)">F\\S</th>'; for (const s of slowLens) h += `<th>${s}</th>`; h += '</tr></thead><tbody>'; for (const f of fastLens) { h += `<tr><th style="position:sticky;left:0;z-index:2;background:var(--bg2)">${f}</th>`; for (const s of slowLens) { if (f >= s) { h += '<td style="opacity:.2">—</td>'; continue; } const k = `${f}_${s}`, it = lk[k]; if (!it) { h += '<td>—</td>'; continue; } const ra = mx !== mn ? (it.v - mn) / (mx - mn) : .5; const co = hc(ra); const isR = k === rk, isS = sk.has(k) && !isR; let cl = 'heatmap-cell'; if (isR) cl += ' best'; else if (isS) cl += ' stable-zone'; const dv = met === 'dd' ? (-it.v).toFixed(1) : it.v.toFixed(1); h += `<td class="${cl}" style="background:${co};color:${ra > .6 ? '#000' : '#fff'}" onmouseenter="tip(event,'${k}')" onmouseleave="htip()">${dv}</td>`; } h += '</tr>'; } c.innerHTML = h + '</tbody></table>'; }
+    function hc(r) { if (r < .5) return `rgb(180,${Math.round(r * 2 * 180)},40)`; return `rgb(${Math.round((1 - (r - .5) * 2) * 180)},200,${40 + Math.round((r - .5) * 2 * 100)})`; }
+    function tip(e, k) { const it = allResults.find(r => `${r.fast}_${r.slow}` === k); if (!it) return; const sk = stableZones(), s = sk.has(k), t = document.getElementById('tooltip'); t.innerHTML = `<div class="tooltip-row"><span class="tooltip-label">MA Nhanh</span><span>${it.fast}</span></div><div class="tooltip-row"><span class="tooltip-label">MA Chậm</span><span>${it.slow}</span></div><hr class="tooltip-divider"><div class="tooltip-row"><span class="tooltip-label">LN</span><span class="${it.profit >= 0 ? 'positive' : 'negative'}">${it.profit.toFixed(2)}%</span></div><div class="tooltip-row"><span class="tooltip-label">Thắng</span><span>${it.winrate.toFixed(1)}%</span></div><div class="tooltip-row"><span class="tooltip-label">Lệnh</span><span>${it.trades}</span></div><div class="tooltip-row"><span class="tooltip-label">PF</span><span>${it.pf > 50 ? '∞' : it.pf.toFixed(2)}</span></div><div class="tooltip-row"><span class="tooltip-label">DD</span><span class="negative">${it.dd.toFixed(2)}%</span></div><div class="tooltip-row"><span class="tooltip-label">Sharpe</span><span>${it.sharpe > 50 ? '∞' : it.sharpe.toFixed(2)}</span></div>${s ? '<div class="tooltip-note">✅ Ổn định</div>' : ''}${it.trades < 5 ? '<div class="tooltip-note" style="color:var(--red)">⚠️ Ít lệnh</div>' : ''}`; t.style.display = 'block'; t.style.left = Math.min(e.clientX + 16, innerWidth - 260) + 'px'; t.style.top = Math.min(e.clientY - 20, innerHeight - 240) + 'px'; }
+    function htip() { document.getElementById('tooltip').style.display = 'none'; }
+    function switchMetric(m, el) { document.querySelectorAll('#metricSelector .metric-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); renderHM(m); }
+
+    // ========== TOP TABLE ==========
+    function sortTop(s, el) { if (el) { document.querySelectorAll('.sort-selector .metric-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); } renderTT(s); }
+    function renderTT(sb) { const s = [...allResults]; switch (sb) { case 'profit': s.sort((a, b) => b.profit - a.profit); break; case 'winrate': s.sort((a, b) => b.winrate - a.winrate); break; case 'pf': s.sort((a, b) => b.pf - a.pf); break; case 'dd': s.sort((a, b) => a.dd - b.dd); break; case 'sharpe': s.sort((a, b) => { const sa = a.sharpe * (a.trades >= 10 ? 1 : a.trades >= 5 ? .7 : .3); const sb2 = b.sharpe * (b.trades >= 10 ? 1 : b.trades >= 5 ? .7 : .3); return sb2 - sa; }); break; }const sk = stableZones(), top = s.slice(0, 20); document.getElementById('topBody').innerHTML = top.map((r, i) => { const rc = i < 3 ? `rank-${i + 1}` : ''; const is = sk.has(`${r.fast}_${r.slow}`); let bd = ''; if (i === 0 && sb === 'sharpe') bd = '<span class="badge badge-best">⭐</span>'; else if (r.trades < 5) bd = '<span class="badge badge-risky">Ít</span>'; else if (is) bd = '<span class="badge badge-stable">OK</span>'; else if (r.dd > 40) bd = '<span class="badge badge-risky">⚠️</span>'; return `<tr><td><div class="rank ${rc}">${i + 1}</div></td><td>${r.fast}</td><td>${r.slow}</td><td class="${r.profit >= 0 ? 'positive' : 'negative'}">${r.profit.toFixed(2)}%</td><td>${r.winrate.toFixed(1)}%</td><td>${r.trades}</td><td>${r.pf > 50 ? '∞' : r.pf.toFixed(2)}</td><td class="negative">${r.dd.toFixed(2)}%</td><td class="${r.avgTrade >= 0 ? 'positive' : 'negative'}">${r.avgTrade.toFixed(2)}%</td><td>${r.sharpe > 50 ? '∞' : r.sharpe.toFixed(2)}</td><td>${bd}</td></tr>`; }).join(''); }
+
+    // ========== CSV ==========
+    function exportCSV() { if (!allResults.length) return; const s = [...allResults].sort((a, b) => b.profit - a.profit); let c = 'FastMA,SlowMA,LN%,Thang%,Lenh,PF,DD%,TB%,Sharpe\n'; for (const r of s) c += `${r.fast},${r.slow},${r.profit.toFixed(4)},${r.winrate.toFixed(2)},${r.trades},${r.pf > 50 ? 999 : r.pf.toFixed(4)},${r.dd.toFixed(4)},${r.avgTrade.toFixed(4)},${r.sharpe > 50 ? 999 : r.sharpe.toFixed(4)}\n`; const blob = new Blob([c], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `macloud_${selectedSymbol}_${document.getElementById('timeframe').value}.csv`; a.click(); URL.revokeObjectURL(url); }
+
+    // ========== COMBO MA SCAN ==========
+    const ALL_MA_TYPES = ['EMA', 'SMA', 'WMA', 'DEMA', 'TEMA', 'HullMA', 'SMMA', 'ZEMA', 'TMA', 'SSMA', 'LINREG'];
+    let comboAllResults = [];  // {fastType,slowType, best:{fast,slow,profit,winrate,trades,pf,dd,sharpe,avgTrade}}
+
+    function clog(m, t = '') { const e = document.getElementById('comboLogArea'); if (!e) return; e.innerHTML += `<span${t ? ` class="${t}"` : ''}>` + m + '</span>\n'; e.scrollTop = e.scrollHeight; }
+    function setComboProg(p, t) { document.getElementById('comboProgressFill').style.width = p + '%'; document.getElementById('comboProgressPct').textContent = Math.round(p) + '%'; if (t) document.getElementById('comboProgressText').textContent = t; }
+
+    async function startComboScan() {
+      const btn = document.getElementById('btnComboScan'); btn.disabled = true; btn.textContent = '⏳ ĐANG QUÉT TỔ HỢP...';
+      document.getElementById('comboProgressWrap').classList.add('active');
+      document.getElementById('comboLogArea').innerHTML = '';
+      document.getElementById('comboResults').style.display = 'none';
+      comboAllResults = [];
+
+      const exchange = document.getElementById('cExchange').value;
+      let sym = document.getElementById('cSymbol').value.toUpperCase().trim();
+      if (exchange === 'mexc_futures' && !sym.includes('_USDT')) sym = sym.replace('USDT', '') + '_USDT';
+      if (exchange === 'binance_spot' && !sym.endsWith('USDT')) sym = sym.replace('_', '') + 'USDT';
+      document.getElementById('cSymbol').value = sym;
+
+      const tf = document.getElementById('cTimeframe').value;
+      const target = +document.getElementById('cCandles').value;
+      const fee = parseFloat(document.getElementById('cFee').value) / 100;
+      const fMin = +document.getElementById('cFastMin').value, fMax = +document.getElementById('cFastMax').value, fStep = +document.getElementById('cFastStep').value;
+      const sMin = +document.getElementById('cSlowMin').value, sMax = +document.getElementById('cSlowMax').value, sStep = +document.getElementById('cSlowStep').value;
+
+      // Get selected MA types
+      const selectedTypes = [];
+      document.querySelectorAll('#cMACheckboxes input[type=checkbox]:checked').forEach(cb => selectedTypes.push(cb.value));
+      if (selectedTypes.length < 2) { clog('Cần chọn ít nhất 2 loại MA!', 'err'); btn.disabled = false; btn.textContent = '🧬 QUÉT TỔ HỢP TẤT CẢ LOẠI MA'; return; }
+
+      // Build all combos of MA types (fast x slow, including same type)
+      const maCombos = [];
+      for (const ft of selectedTypes) for (const st of selectedTypes) maCombos.push([ft, st]);
+      clog(`📊 ${selectedTypes.length} loại MA → ${maCombos.length} tổ hợp (${selectedTypes.join(', ')})`, 'info');
+
+      // Fetch data once
+      let kl;
+      try {
+        kl = await fetchKlines(exchange, sym, tf, target, clog);
+      } catch (e) { clog('Lỗi tải dữ liệu: ' + e.message, 'err'); btn.disabled = false; btn.textContent = '🧬 QUÉT TỔ HỢP TẤT CẢ LOẠI MA'; return; }
+
+      // Build length arrays
+      const fLens = []; for (let l = fMin; l <= fMax; l += fStep)fLens.push(l);
+      const sLens = []; for (let l = sMin; l <= sMax; l += sStep)sLens.push(l);
+      let lenCombos = [];
+      for (const f of fLens) for (const s of sLens) if (f < s) lenCombos.push([f, s]);
+
+      const totalWork = maCombos.length * lenCombos.length;
+      clog(`⚡ ${maCombos.length} tổ hợp loại × ${lenCombos.length} tổ hợp length = ${totalWork.toLocaleString()} backtest`, 'info');
+
+      // Update status badges
+      function updateComboBadges(currentIdx) {
+        document.getElementById('comboComboStatus').innerHTML = maCombos.map(([ft, st], i) => {
+          const label = `${ft}×${st}`;
+          if (i < currentIdx) return `<span class="tf-status tf-done">✓ ${label}</span>`;
+          if (i === currentIdx) return `<span class="tf-status tf-run">⏳ ${label}</span>`;
+          return `<span class="tf-status tf-wait">${label}</span>`;
+        }).join('');
+      }
+
+      const t0 = performance.now();
+      let globalDone = 0;
+
+      for (let ci = 0; ci < maCombos.length; ci++) {
+        const [ft, st] = maCombos[ci];
+        updateComboBadges(ci);
+        setComboProg((ci / maCombos.length) * 100, `${ft} × ${st} (${ci + 1}/${maCombos.length})...`);
+
+        let bestResult = null;
+        for (const [f, s] of lenCombos) {
+          const r = bt(kl, f, s, ft, st, fee);
+          if (r) {
+            if (!bestResult || r.sharpe * (r.trades >= 10 ? 1 : r.trades >= 5 ? .7 : .3) > bestResult.sharpe * (bestResult.trades >= 10 ? 1 : bestResult.trades >= 5 ? .7 : .3)) {
+              bestResult = r;
+            }
+          }
+          globalDone++;
+          if (globalDone % 100 === 0) {
+            setComboProg((globalDone / totalWork) * 100);
+            await new Promise(r => setTimeout(r, 0));
+          }
+        }
+        if (bestResult) {
+          comboAllResults.push({ fastType: ft, slowType: st, best: bestResult });
+          clog(`✓ ${ft}×${st}: F=${bestResult.fast} S=${bestResult.slow} → LN ${bestResult.profit.toFixed(1)}% | Sharpe ${bestResult.sharpe.toFixed(1)}`, 'ok');
+        } else {
+          clog(`✗ ${ft}×${st}: không có kết quả hợp lệ`, 'warn');
+        }
+      }
+
+      updateComboBadges(maCombos.length);
+      const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+      setComboProg(100, `Hoàn tất ${elapsed}s — ${totalWork.toLocaleString()} backtest`);
+      clog(`✓ Tổng thời gian: ${elapsed}s`, 'ok');
+
+      showComboResults(sym, exchange, tf);
+      btn.disabled = false; btn.textContent = '🧬 QUÉT TỔ HỢP TẤT CẢ LOẠI MA';
+    }
+
+    function showComboResults(sym, exchange, tf) {
+      if (!comboAllResults.length) return;
+      document.getElementById('comboResults').style.display = 'block';
+
+      // Sort by weighted Sharpe
+      const sorted = [...comboAllResults].sort((a, b) => {
+        const sa = a.best.sharpe * (a.best.trades >= 10 ? 1 : a.best.trades >= 5 ? .7 : .3);
+        const sb = b.best.sharpe * (b.best.trades >= 10 ? 1 : b.best.trades >= 5 ? .7 : .3);
+        return sb - sa;
+      });
+
+      // Summary table
+      document.getElementById('comboSummaryBody').innerHTML = sorted.map((r, i) => {
+        const b = r.best, isBest = i === 0;
+        const rc = i < 3 ? `rank-${i + 1}` : '';
+        return `<tr class="${isBest ? 'best-row' : ''}"><td><div class="rank ${rc}">${i + 1}</div></td><td><strong>${r.fastType}</strong></td><td><strong>${r.slowType}</strong></td><td>${b.fast}</td><td>${b.slow}</td><td class="${b.profit >= 0 ? 'positive' : 'negative'}">${b.profit.toFixed(2)}%</td><td>${b.winrate.toFixed(1)}%</td><td>${b.trades}</td><td>${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</td><td class="negative">${b.dd.toFixed(2)}%</td><td>${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</td><td>${isBest ? '<span class="best-badge">⭐ TỐT NHẤT</span>' : ''}</td></tr>`;
+      }).join('');
+
+      // Render heatmap
+      renderComboHeatmap('sharpe');
+
+      // Recommendation
+      const best = sorted[0];
+      if (best) {
+        const b = best.best;
+        document.getElementById('comboRecommendation').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+        <div class="stat-card orange"><div class="stat-label">Tổ hợp tối ưu</div><div class="stat-value">${best.fastType} × ${best.slowType}</div><div class="stat-sub">${sym} — ${tf} — ${exchange === 'mexc_futures' ? 'MEXC Futures' : 'Binance'}</div></div>
+        <div class="stat-card green"><div class="stat-label">Tham số đề xuất</div><div class="stat-value">F=${b.fast}, S=${b.slow}</div><div class="stat-sub">LN ${b.profit.toFixed(2)}%</div></div>
+        <div class="stat-card blue"><div class="stat-label">Tỷ lệ thắng</div><div class="stat-value">${b.winrate.toFixed(1)}%</div><div class="stat-sub">${b.trades} lệnh</div></div>
+        <div class="stat-card purple"><div class="stat-label">Sharpe / PF</div><div class="stat-value">${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</div><div class="stat-sub">PF: ${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</div></div>
+        <div class="stat-card red"><div class="stat-label">Sụt giảm vốn</div><div class="stat-value">${b.dd.toFixed(2)}%</div><div class="stat-sub">Max drawdown</div></div>
+      </div>
+      <p style="margin-top:16px;color:var(--text2);font-size:13px">💡 Trong ${comboAllResults.length} tổ hợp loại MA, <strong style="color:var(--orange)">${best.fastType} × ${best.slowType}</strong> cho kết quả tốt nhất. Dùng trên TradingView: <strong style="color:var(--accent)">MA Nhanh = ${best.fastType}(${b.fast}), MA Chậm = ${best.slowType}(${b.slow})</strong>.</p>`;
+      }
+    }
+
+    function renderComboHeatmap(met) {
+      const c = document.getElementById('comboHeatmapContainer');
+      // Get unique types used
+      const fTypes = [...new Set(comboAllResults.map(r => r.fastType))];
+      const sTypes = [...new Set(comboAllResults.map(r => r.slowType))];
+      // Build lookup
+      const lk = {}; let mn = Infinity, mx = -Infinity;
+      for (const r of comboAllResults) {
+        const k = `${r.fastType}_${r.slowType}`;
+        let v;
+        switch (met) {
+          case 'profit': v = r.best.profit; break; case 'winrate': v = r.best.winrate; break;
+          case 'pf': v = Math.min(r.best.pf, 10); break; case 'dd': v = -r.best.dd; break;
+          case 'sharpe': v = Math.min(r.best.sharpe, 20); break; default: v = r.best.sharpe;
+        }
+        lk[k] = { v, r }; if (v < mn) mn = v; if (v > mx) mx = v;
+      }
+      // Find best
+      const bestK = comboAllResults.length ? `${comboAllResults.sort((a, b) => { const sa = a.best.sharpe * (a.best.trades >= 10 ? 1 : .7); const sb = b.best.sharpe * (b.best.trades >= 10 ? 1 : .7); return sb - sa; })[0].fastType}_${comboAllResults[0].slowType}` : '';
+
+      let h = '<table><thead><tr><th style="position:sticky;left:0;z-index:3;background:var(--bg2)">Fast \\ Slow</th>';
+      for (const st of sTypes) h += `<th>${st}</th>`;
+      h += '</tr></thead><tbody>';
+      for (const ft of fTypes) {
+        h += `<tr><th style="position:sticky;left:0;z-index:2;background:var(--bg2);font-weight:600">${ft}</th>`;
+        for (const st of sTypes) {
+          const k = `${ft}_${st}`, it = lk[k];
+          if (!it) { h += '<td>—</td>'; continue; }
+          const ra = mx !== mn ? (it.v - mn) / (mx - mn) : .5;
+          const co = hc(ra);
+          const isB = k === bestK;
+          let cl = 'heatmap-cell'; if (isB) cl += ' best';
+          const dv = met === 'dd' ? (-it.v).toFixed(1) : it.v.toFixed(1);
+          h += `<td class="${cl}" style="background:${co};color:${ra > .6 ? '#000' : '#fff'};padding:8px 6px;font-size:12px" title="${ft}×${st}: ${dv}">${dv}</td>`;
+        }
+        h += '</tr>';
+      }
+      c.innerHTML = h + '</tbody></table>';
+    }
+    function switchComboMetric(m, el) { document.querySelectorAll('#comboMetricSelector .metric-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); renderComboHeatmap(m); }
+
+    // ========== FULL SCAN (AUTO + COMBO) ==========
+    let fullSelectedTfs = [];
+    let fullResults = {}; // {tf: {combos:[{fastType,slowType,best:{...}}], bestCombo:{...}, candles:N}}
+
+    function flog(m, t = '') { const e = document.getElementById('fullLogArea'); if (!e) return; e.innerHTML += `<span${t ? ` class="${t}"` : ''}>` + m + '</span>\n'; e.scrollTop = e.scrollHeight; }
+    function setFullProg(p, t) { document.getElementById('fullProgressFill').style.width = p + '%'; document.getElementById('fullProgressPct').textContent = Math.round(p) + '%'; if (t) document.getElementById('fullProgressText').textContent = t; }
+
+    async function startFullScan() {
+      const btn = document.getElementById('btnFullScan'); btn.disabled = true; btn.textContent = '⏳ ĐANG QUÉT TOÀN DIỆN...';
+      // Read selected timeframes
+      fullSelectedTfs = [];
+      document.querySelectorAll('#fTfCheckboxes input[type=checkbox]:checked').forEach(cb => fullSelectedTfs.push(cb.value));
+      if (fullSelectedTfs.length < 1) { flog('Cần chọn ít nhất 1 khung thời gian!', 'err'); btn.disabled = false; btn.textContent = '🔥 QUÉT TOÀN DIỆN — ĐA KHUNG × TẤT CẢ COMBO MA'; return; }
+      document.getElementById('fullProgressWrap').classList.add('active');
+      document.getElementById('fullLogArea').innerHTML = ''; document.getElementById('fullResults').style.display = 'none';
+      fullResults = {};
+
+      const exchange = document.getElementById('fExchange').value;
+      let sym = document.getElementById('fSymbol').value.toUpperCase().trim();
+      if (exchange === 'mexc_futures' && !sym.includes('_USDT')) sym = sym.replace('USDT', '') + '_USDT';
+      if (exchange === 'binance_spot' && !sym.endsWith('USDT')) sym = sym.replace('_', '') + 'USDT';
+      document.getElementById('fSymbol').value = sym;
+
+      const target = +document.getElementById('fCandles').value;
+      const fee = parseFloat(document.getElementById('fFee').value) / 100;
+      const fMin = +document.getElementById('fFastMin').value, fMax = +document.getElementById('fFastMax').value, fStep = +document.getElementById('fFastStep').value;
+      const sMin = +document.getElementById('fSlowMin').value, sMax = +document.getElementById('fSlowMax').value, sStep = +document.getElementById('fSlowStep').value;
+
+      // Get selected MA types
+      const selectedTypes = [];
+      document.querySelectorAll('#fMACheckboxes input[type=checkbox]:checked').forEach(cb => selectedTypes.push(cb.value));
+      if (selectedTypes.length < 2) { flog('Cần chọn ít nhất 2 loại MA!', 'err'); btn.disabled = false; btn.textContent = '🔥 QUÉT TOÀN DIỆN — ĐA KHUNG × TẤT CẢ COMBO MA'; return; }
+
+      // Build MA combos
+      const maCombos = [];
+      for (const ft of selectedTypes) for (const st of selectedTypes) maCombos.push([ft, st]);
+
+      // Build length combos
+      const fLens = []; for (let l = fMin; l <= fMax; l += fStep)fLens.push(l);
+      const sLens = []; for (let l = sMin; l <= sMax; l += sStep)sLens.push(l);
+      let lenCombos = [];
+      for (const f of fLens) for (const s of sLens) if (f < s) lenCombos.push([f, s]);
+
+      const totalWork = fullSelectedTfs.length * maCombos.length * lenCombos.length;
+      flog(`🔥 ${selectedTypes.length} loại MA → ${maCombos.length} combo × ${lenCombos.length} length × ${fullSelectedTfs.length} khung = ${totalWork.toLocaleString()} backtest`, 'info');
+
+      function updateFullTfBadges(ci) { document.getElementById('fullTfStatus').innerHTML = fullSelectedTfs.map((tf, i) => i < ci ? `<span class="tf-status tf-done">✓ ${tf}</span>` : i === ci ? `<span class="tf-status tf-run">⏳ ${tf}...</span>` : `<span class="tf-status tf-wait">${tf}</span>`).join(''); }
+
+      const t0 = performance.now();
+      let globalDone = 0;
+
+      for (let ti = 0; ti < fullSelectedTfs.length; ti++) {
+        const tf = fullSelectedTfs[ti]; updateFullTfBadges(ti);
+        setFullProg((ti / fullSelectedTfs.length) * 100, `Đang quét ${tf} (${ti + 1}/${fullSelectedTfs.length})...`);
+
+        let kl;
+        try {
+          kl = await fetchKlines(exchange, sym, tf, target, flog);
+        } catch (e) {
+          flog(`✗ ${tf}: ${e.message}`, 'err');
+          fullResults[tf] = { error: e.message, combos: [], bestCombo: null, candles: 0 };
+          globalDone += maCombos.length * lenCombos.length;
+          continue;
+        }
+
+        const tfCombos = [];
+        for (let ci = 0; ci < maCombos.length; ci++) {
+          const [ft, st] = maCombos[ci];
+          let bestResult = null;
+          for (const [f, s] of lenCombos) {
+            const r = bt(kl, f, s, ft, st, fee);
+            if (r) {
+              if (!bestResult || r.sharpe * (r.trades >= 10 ? 1 : r.trades >= 5 ? .7 : .3) > bestResult.sharpe * (bestResult.trades >= 10 ? 1 : bestResult.trades >= 5 ? .7 : .3)) {
+                bestResult = r;
+              }
+            }
+            globalDone++;
+            if (globalDone % 200 === 0) {
+              setFullProg((globalDone / totalWork) * 100);
+              await new Promise(r => setTimeout(r, 0));
+            }
+          }
+          if (bestResult) {
+            tfCombos.push({ fastType: ft, slowType: st, best: bestResult });
+          }
+        }
+
+        // Sort combos by weighted Sharpe, find best for this TF
+        tfCombos.sort((a, b) => {
+          const sa = a.best.sharpe * (a.best.trades >= 10 ? 1 : a.best.trades >= 5 ? .7 : .3);
+          const sb = b.best.sharpe * (b.best.trades >= 10 ? 1 : b.best.trades >= 5 ? .7 : .3);
+          return sb - sa;
+        });
+
+        const bestCombo = tfCombos.length > 0 ? tfCombos[0] : null;
+        fullResults[tf] = { combos: tfCombos, bestCombo: bestCombo, candles: kl.length };
+        if (bestCombo) {
+          flog(`✓ ${tf}: Best = ${bestCombo.fastType}×${bestCombo.slowType} F=${bestCombo.best.fast} S=${bestCombo.best.slow} → LN ${bestCombo.best.profit.toFixed(1)}% | Sharpe ${bestCombo.best.sharpe.toFixed(1)}`, 'ok');
+        } else {
+          flog(`⚠ ${tf}: không có kết quả hợp lệ`, 'warn');
+        }
+      }
+
+      updateFullTfBadges(fullSelectedTfs.length);
+      const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+      setFullProg(100, `Hoàn tất ${elapsed}s — ${totalWork.toLocaleString()} backtest`);
+      flog(`✓ Tổng thời gian: ${elapsed}s`, 'ok');
+
+      showFullResults(sym, exchange);
+      btn.disabled = false; btn.textContent = '🔥 QUÉT TOÀN DIỆN — ĐA KHUNG × TẤT CẢ COMBO MA';
+    }
+
+    function showFullResults(sym, exchange) {
+      document.getElementById('fullResults').style.display = 'block';
+
+      // Find overall best TF+combo
+      let overallBestTf = '', overallBestScore = -Infinity, overallBestCombo = null;
+      for (const tf of fullSelectedTfs) {
+        const r = fullResults[tf];
+        if (!r || r.error || !r.bestCombo) continue;
+        const s = r.bestCombo.best.sharpe * (r.bestCombo.best.trades >= 10 ? 1 : r.bestCombo.best.trades >= 5 ? .7 : .3);
+        if (s > overallBestScore) { overallBestScore = s; overallBestTf = tf; overallBestCombo = r.bestCombo; }
+      }
+
+      // Summary table
+      document.getElementById('fullSummaryBody').innerHTML = fullSelectedTfs.map(tf => {
+        const r = fullResults[tf];
+        if (!r) return '';
+        if (r.error) return `<tr><td>${tf}</td><td colspan="12" class="negative">Lỗi: ${r.error}</td></tr>`;
+        if (!r.bestCombo) return `<tr><td>${tf}</td><td colspan="12" class="negative">Không có kết quả hợp lệ</td></tr>`;
+        const bc = r.bestCombo, b = bc.best, isBest = tf === overallBestTf;
+        return `<tr class="${isBest ? 'best-row' : ''}"><td><strong>${tf}</strong></td><td><strong>${bc.fastType}</strong></td><td><strong>${bc.slowType}</strong></td><td>${b.fast}</td><td>${b.slow}</td><td class="${b.profit >= 0 ? 'positive' : 'negative'}">${b.profit.toFixed(2)}%</td><td>${b.winrate.toFixed(1)}%</td><td>${b.trades}</td><td>${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</td><td class="negative">${b.dd.toFixed(2)}%</td><td>${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</td><td>${r.candles.toLocaleString()}</td><td>${isBest ? '<span class="best-badge">⭐ TỐT NHẤT</span>' : r.combos.length + ' combo'}</td></tr>`;
+      }).join('');
+
+      // Detail panels per TF: Top 5 combos
+      let detailHTML = '';
+      for (const tf of fullSelectedTfs) {
+        const r = fullResults[tf];
+        if (!r || r.error || !r.combos.length) continue;
+        const top5 = r.combos.slice(0, 5);
+        detailHTML += `<div class="auto-summary" style="margin-bottom:16px"><div class="panel-header">📋 ${tf} — Top ${top5.length} combo MA</div><div class="panel-body"><table class="auto-table"><thead><tr><th>#</th><th>MA Nhanh</th><th>MA Chậm</th><th>Fast Len</th><th>Slow Len</th><th>LN%</th><th>Thắng</th><th>Lệnh</th><th>PF</th><th>DD%</th><th>Sharpe</th></tr></thead><tbody>`;
+        top5.forEach((c, i) => {
+          const b = c.best, rc = i < 3 ? `rank-${i + 1}` : '';
+          detailHTML += `<tr class="${i === 0 ? 'best-row' : ''}"><td><div class="rank ${rc}">${i + 1}</div></td><td><strong>${c.fastType}</strong></td><td><strong>${c.slowType}</strong></td><td>${b.fast}</td><td>${b.slow}</td><td class="${b.profit >= 0 ? 'positive' : 'negative'}">${b.profit.toFixed(2)}%</td><td>${b.winrate.toFixed(1)}%</td><td>${b.trades}</td><td>${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</td><td class="negative">${b.dd.toFixed(2)}%</td><td>${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</td></tr>`;
+        });
+        detailHTML += `</tbody></table></div></div>`;
+      }
+      document.getElementById('fullDetailPanels').innerHTML = detailHTML;
+
+      // Overall recommendation
+      if (overallBestTf && overallBestCombo) {
+        const b = overallBestCombo.best;
+        document.getElementById('fullRecommendation').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+        <div class="stat-card yellow"><div class="stat-label">Khung tối ưu</div><div class="stat-value">${overallBestTf}</div><div class="stat-sub">${sym} — ${exchange === 'mexc_futures' ? 'MEXC Futures' : 'Binance'}</div></div>
+        <div class="stat-card orange"><div class="stat-label">Combo MA tối ưu</div><div class="stat-value">${overallBestCombo.fastType} × ${overallBestCombo.slowType}</div><div class="stat-sub">Nhanh × Chậm</div></div>
+        <div class="stat-card green"><div class="stat-label">Tham số đề xuất</div><div class="stat-value">F=${b.fast}, S=${b.slow}</div><div class="stat-sub">LN ${b.profit.toFixed(2)}%</div></div>
+        <div class="stat-card blue"><div class="stat-label">Tỷ lệ thắng</div><div class="stat-value">${b.winrate.toFixed(1)}%</div><div class="stat-sub">${b.trades} lệnh</div></div>
+        <div class="stat-card purple"><div class="stat-label">Sharpe / PF</div><div class="stat-value">${b.sharpe > 50 ? '∞' : b.sharpe.toFixed(2)}</div><div class="stat-sub">PF: ${b.pf > 50 ? '∞' : b.pf.toFixed(2)}</div></div>
+        <div class="stat-card red"><div class="stat-label">Sụt giảm vốn</div><div class="stat-value">${b.dd.toFixed(2)}%</div><div class="stat-sub">Max drawdown</div></div>
+      </div>
+      <p style="margin-top:16px;color:var(--text2);font-size:13px">🔥 Trên ${fullResults[overallBestTf].candles.toLocaleString()} nến, khung <strong style="color:var(--yellow)">${overallBestTf}</strong> với combo <strong style="color:var(--orange)">${overallBestCombo.fastType} × ${overallBestCombo.slowType}</strong> cho kết quả tốt nhất. Dùng trên TradingView: <strong style="color:var(--accent)">MA Nhanh = ${overallBestCombo.fastType}(${b.fast}), MA Chậm = ${overallBestCombo.slowType}(${b.slow})</strong>.</p>`;
+      } else {
+        document.getElementById('fullRecommendation').innerHTML = '<p class="negative">Không tìm được tham số phù hợp.</p>';
+      }
+    }
+
+    // ========== INIT ==========
+    checkServer().then(ok => { if (ok) loadSymbols(); });
+  </script>
+</body>
+
+</html>
