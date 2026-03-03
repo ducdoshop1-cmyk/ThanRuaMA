@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MA Cloud Optimizer Server v1.0
+MA Flip Server v1.0
 Chay: python server.py
 Mo trinh duyet: http://localhost:8888
 """
@@ -21,6 +21,7 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
+# Binance API mirrors - auto fallback if main domain is geo-blocked
 BINANCE_HOSTS = [
     'https://data-api.binance.vision',
     'https://api.binance.com',
@@ -174,7 +175,7 @@ def run():
     srv = http.server.HTTPServer(('0.0.0.0', PORT), Handler)
     print("")
     print("=" * 50)
-    print("  MA Cloud Optimizer Server v1.0")
+    print("  MA Flip Server v1.0")
     print(f"  http://localhost:{PORT}")
     print("  Ctrl+C to stop")
     print("")
